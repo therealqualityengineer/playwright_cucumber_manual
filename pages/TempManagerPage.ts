@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 export class TempManagerPage {
     constructor(private page: Page) {}
@@ -64,5 +64,24 @@ export class TempManagerPage {
                 await this.page.locator('#undefined_specsColumn').getByRole('listitem', { name: value, exact: true }).click();
                 break;
         }
+    }
+
+    async navigateTo(url : string) {
+        const base = new URL(this.page.url()).origin;
+        await this.page.goto(`${base}${url}`, { waitUntil: 'domcontentloaded' });
+    }
+
+    async addFlatAmounts(pay : string, bill : string){
+        await this.page.locator("[name='temppayedit']").first().click();
+        await this.page.locator("[name='howpay'][value='flat']").click();
+        await this.page.locator("[name='payflat']").fill(pay);
+        await this.page.locator("[name='billflat']").fill(bill);
+        await this.page.locator("[name='temppayupdate']").first().click();
+        await this.page.waitForLoadState('domcontentloaded');
+    }
+
+    async verifyFlatPayEnabled() {
+        const flatPayCell = this.page.getByRole('cell', { name: 'Flat Pay', exact: true });
+        await expect(flatPayCell.locator('xpath=following-sibling::td').getByText('Enabled')).toBeVisible();
     }
 }

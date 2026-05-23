@@ -31,3 +31,12 @@ Then('the temp id should be generated successfully in the url', async function (
     this.tempId = await this.tempManagerPage.waitForTempId();
     console.log("Temp ID:", this.tempId)
 });
+
+Given('the user added the Flat pay of {string} and {string} to Pay and Bill amounts', async function (this: CustomWorld, pay : string, bill : string) {
+    await this.tempManagerPage.navigateTo(`/wfportal/temppay.cfm?tempid=${this.tempId}`);
+    await this.tempManagerPage.addFlatAmounts(pay,bill);
+})
+
+Then('the user verifies Flat Pay enabled', async function (this: CustomWorld) {
+    await this.tempManagerPage.verifyFlatPayEnabled();
+})

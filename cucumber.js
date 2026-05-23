@@ -10,7 +10,7 @@ module.exports = {
 
     requireModule: ['ts-node/register'],
 
-    parallel: 2,
+    parallel: 0,
 
     retry: 1,
 
