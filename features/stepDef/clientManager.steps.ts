@@ -17,10 +17,15 @@ Given('the user create a new client with the following details', async function 
         }
     }
 
+    const clientName = details['ClientName'];
+    if (clientName !== undefined) this.clientName = clientName;
+
+    console.log("Client Name:", this.clientName)
     await this.clientManagerPage.navigateToNewClient();
     await this.clientManagerPage.createClient(details);
 });
 
 Then('the client id should be generated successfully in the url', async function (this: CustomWorld) {
-    await this.clientManagerPage.waitForClientId();
+    this.clientId = await this.clientManagerPage.waitForClientId();
+    console.log("Client Name:", this.clientId)
 });

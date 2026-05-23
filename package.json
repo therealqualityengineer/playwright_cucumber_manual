@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "cucumber-js",
+    "test:tag": "cucumber-js --tags",
     "report": "open reports/cucumber-report.html"
   },
   "keywords": [],

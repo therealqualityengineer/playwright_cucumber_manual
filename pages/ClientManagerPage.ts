@@ -15,12 +15,14 @@ export class ClientManagerPage {
         await this.page.getByRole('button', { name: 'Save' }).first().click();
     }
 
-    async waitForClientId() {
+    async waitForClientId(): Promise<string> {
         await this.page.waitForURL(url => !url.href.includes('newclient=yes'));
         const url = this.page.url();
-        if (!/[Cc]lient[Ii][Dd]=\d+/.test(url)) {
+        const match = url.match(/[Cc]lient[Ii][Dd]=(\d+)/);
+        if (!match) {
             throw new Error(`No client ID found in URL after save: ${url}`);
         }
+        return match[1]!;
     }
 
     private async fillField(field: string, value: string) {

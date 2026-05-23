@@ -1,7 +1,7 @@
 const LENGTH = 10;
 
 const chars = {
-    alpha: 'abcdefghijklmnopqrstuvwxyz',
+    alpha: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
     upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
     numbers: '0123456789',
 };
@@ -21,7 +21,7 @@ export function RandomNumbers(): string {
 
 export function RandomEmail(): string {
     const local = randomFrom(chars.alpha, LENGTH);
-    return `${local}@test.com`;
+    return `${local}@gmail.com`;
 }
 
 export function RandomAlphabets(): string {
