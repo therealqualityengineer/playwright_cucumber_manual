@@ -1,30 +1,5 @@
-import { Given, When, Then, Before, After, IWorldOptions, setWorldConstructor, World, setDefaultTimeout } from '@cucumber/cucumber';
-
-setDefaultTimeout(60 * 1000);
-import { chromium, Browser, Page } from '@playwright/test';
-import { LoginPage } from '../../pages/LoginPage';
-
-class CustomWorld extends World {
-  browser!: Browser;
-  page!: Page;
-  loginPage!: LoginPage;
-
-  constructor(options: IWorldOptions) {
-    super(options);
-  }
-}
-
-setWorldConstructor(CustomWorld);
-
-Before(async function (this: CustomWorld) {
-  this.browser = await chromium.launch({ headless: false });
-  this.page = await this.browser.newPage();
-  this.loginPage = new LoginPage(this.page);
-});
-
-After(async function (this: CustomWorld) {
-  await this.browser.close();
-});
+import { Given, When, Then, After } from '@cucumber/cucumber';
+import { CustomWorld } from '../../utils/CustomWorld';
 
 Given('the user navigates to the login page', async function (this: CustomWorld) {
   await this.loginPage.navigate();

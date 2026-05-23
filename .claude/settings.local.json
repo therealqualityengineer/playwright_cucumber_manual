@@ -5,7 +5,11 @@
       "Bash(npm run *)",
       "Bash(git *)",
       "Read(//opt/homebrew/bin/**)",
-      "Read(//Users/arunramalingam/Applications/**)"
+      "Read(//Users/arunramalingam/Applications/**)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_snapshot"
     ]
   }
 }

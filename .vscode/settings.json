@@ -5,5 +5,7 @@
 
   "cucumber.glue": [
     "features/stepDef/**/*.ts"
-  ]
+  ],
+
+  "editor.formatOnSave": true
 }
