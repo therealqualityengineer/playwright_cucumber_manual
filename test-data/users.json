@@ -1,0 +1,26 @@
+{
+    "testuser_01": {
+        "username": "testuser_01",
+        "password": "Therealqaengineer@99"
+    },
+    "testuser_02": {
+        "username": "testuser_02",
+        "password": "Therealqaengineer@99"
+    },
+    "testuser_03": {
+        "username": "testuser_03",
+        "password": "Therealqaengineer@99"
+    },
+    "testuser_04": {
+        "username": "testuser_04",
+        "password": "Therealqaengineer@99"
+    },
+    "testuser_05": {
+        "username": "testuser_05",
+        "password": "Therealqaengineer@99"
+    },
+    "default": {
+        "username": "qaengineer",
+        "password": "Therealqaengineer@99"
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "playwright_cucumber_manual",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "cucumber-js",
+    "report": "open reports/cucumber-report.html"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@cucumber/cucumber": "^12.9.0",
+    "@playwright/test": "^1.60.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}

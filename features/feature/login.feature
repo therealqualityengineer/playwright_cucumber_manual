@@ -1,0 +1,12 @@
+Feature: Login
+
+  Scenario: Successful login with valid credentials
+    Given the user navigates to the login page
+    When the user enters username "testuser_01" and password "Therealqaengineer@99"
+    And the user clicks the Login button
+    Then the user should be logged in successfully
+
+  Scenario: Successful login with default credentials
+    Given the user login to the application 'Env_QA' with 'default' credentials
+
+
