@@ -1,7 +1,7 @@
 Feature: Temp Manager Functionality
 
   Background:
-    Given the user login to the application 'Env_QA' with 'testuser_02' credentials
+    Given the user login to the application 'Env_QA' with 'testuser_04' credentials
 
   @regression
   Scenario: Create a new temp

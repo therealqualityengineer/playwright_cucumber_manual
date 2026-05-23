@@ -34,20 +34,12 @@ export class LoginPage {
   }
 
   async navigateEnv(environment: string) {
-    let url = '';
-    if (environment === 'Env_QA') {
-      url = envData.Env_QA;
-    } else if (environment === 'Env_Dev') {
-      url = envData.Env_Dev;
-    } else if (environment === 'Env_HF') {
-      url = envData.Env_HF;
-    } else {
-      throw new Error(`Unknown environment: ${environment}`);
-    }
+    const url = envData[environment as keyof typeof envData];
+    if (!url) throw new Error(`Unknown environment: ${environment}`);
     await this.page.goto(url);
   }
 
-  async getCredentials(credential: string) {
+  getCredentials(credential: string) {
     let username = '';
     let password = '';
     if(credential === 'default') {
@@ -62,7 +54,7 @@ export class LoginPage {
 
   async login(application: string, credential: string) {
     await this.navigateEnv(application);
-    const { username, password } = await this.getCredentials(credential);
+    const { username, password } = this.getCredentials(credential);
     await this.fillUsername(username);
     await this.fillPassword(password);
     await this.clickLogin();

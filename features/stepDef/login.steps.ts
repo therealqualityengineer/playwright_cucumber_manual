@@ -1,4 +1,4 @@
-import { Given, When, Then, After } from '@cucumber/cucumber';
+import { Given, When, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '../../utils/CustomWorld';
 
 Given('the user navigates to the login page', async function (this: CustomWorld) {

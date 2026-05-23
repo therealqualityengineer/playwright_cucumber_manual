@@ -27,3 +27,17 @@ export function RandomEmail(): string {
 export function RandomAlphabets(): string {
     return randomFrom(chars.alpha + chars.upper, LENGTH);
 }
+
+export function ResolveDate(placeholder: string): string {
+    const match = placeholder.match(/^<Today([+-]\d+)?>$/);
+    if (!match) return placeholder;
+
+    const offset = match[1] ? parseInt(match[1], 10) : 0;
+    const date = new Date();
+    date.setDate(date.getDate() + offset);
+
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+}

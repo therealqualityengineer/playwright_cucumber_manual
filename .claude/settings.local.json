@@ -9,7 +9,18 @@
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_fill_form",
       "mcp__playwright__browser_click",
-      "mcp__playwright__browser_snapshot"
+      "mcp__playwright__browser_snapshot",
+      "Bash(xargs ls -la)",
+      "mcp__playwright__browser_evaluate",
+      "Bash(xargs ls)",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_tabs",
+      "mcp__playwright__browser_close",
+      "Bash(pkill -f \"mcp-chrome\")",
+      "mcp__playwright__browser_console_messages",
+      "Bash(npm test *)",
+      "Bash(npx cucumber-js *)"
     ]
   }
 }

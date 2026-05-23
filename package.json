@@ -6,7 +6,11 @@
   "scripts": {
     "test": "cucumber-js",
     "test:tag": "cucumber-js --tags",
-    "report": "open reports/cucumber-report.html"
+    "report": "open reports/cucumber-report.html",
+    "allure:generate": "allure generate allure-results --clean -o allure-report",
+    "allure:open": "allure open allure-report",
+    "allure:report": "npm run allure:generate && npm run allure:open",
+    "lint": "eslint features/ pages/ hooks/ utils/ test-data/ --ext .ts"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +19,11 @@
   "devDependencies": {
     "@cucumber/cucumber": "^12.9.0",
     "@playwright/test": "^1.60.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "allure-commandline": "^2.41.0",
+    "allure-cucumberjs": "^3.9.0",
+    "eslint": "^8.57.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
