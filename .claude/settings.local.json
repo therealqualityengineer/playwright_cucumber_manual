@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(git *)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Users/arunramalingam/Applications/**)"
+    ]
+  }
+}
