@@ -49,8 +49,10 @@ export class ClientManagerPage {
                 await this.page.getByRole('row', { name: /^Region/ }).getByRole('combobox').selectOption(value);
                 break;
             case 'QuickBooksID':
-                await this.page.getByRole('row', { name: /Quickbooks ID/ }).getByRole('textbox').fill(value);
+                await this.page.getByRole('row', { name: 'Quickbooks ID *' }).getByRole('textbox').fill(value);
                 break;
+            default:
+                throw new Error(`Unknown field: "${field}"`);
         }
     }
 }
