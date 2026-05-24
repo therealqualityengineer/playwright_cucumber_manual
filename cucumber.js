@@ -15,9 +15,9 @@ module.exports = {
     retry: 1,
 
     format: [
-      'progress-bar',
+      'progress',
       'html:reports/cucumber-report.html',
-      'allure-cucumberjs/reporter'
+      'allure-cucumberjs/reporter:reports/allure-stream.txt'
     ],
 
     formatOptions: {

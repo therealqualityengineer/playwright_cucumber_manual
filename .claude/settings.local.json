@@ -20,7 +20,16 @@
       "Bash(pkill -f \"mcp-chrome\")",
       "mcp__playwright__browser_console_messages",
       "Bash(npm test *)",
-      "Bash(npx cucumber-js *)"
+      "Bash(npx cucumber-js *)",
+      "Bash(dir node_modules\\\\.bin\\\\cucumber*)",
+      "PowerShell(winget install Anthropic.ClaudeCode)",
+      "PowerShell(winget install Anthropic.ClaudeCode --accept-source-agreements --accept-package-agreements)",
+      "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); claude --version)",
+      "PowerShell(Get-Command claude -ErrorAction SilentlyContinue; where.exe claude 2>$null; Get-ChildItem \"$env:LOCALAPPDATA\\\\Microsoft\\\\WinGet\\\\Packages\" -Recurse -Filter \"claude.exe\" -ErrorAction SilentlyContinue | Select-Object FullName)",
+      "PowerShell(Get-ChildItem \"$env:LOCALAPPDATA\\\\Microsoft\\\\WinGet\" -Recurse -Filter \"claude.exe\" -ErrorAction SilentlyContinue | Select-Object FullName; Get-ChildItem \"C:\\\\Program Files\" -Recurse -Filter \"claude.exe\" -ErrorAction SilentlyContinue | Select-Object FullName; Get-ChildItem \"$env:APPDATA\" -Recurse -Filter \"claude.exe\" -ErrorAction SilentlyContinue | Select-Object FullName)",
+      "Bash(npm show *)",
+      "Bash(node -e \"const v = JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\('latest versions:', v.slice\\(-5\\).join\\(', '\\)\\)\")",
+      "Bash(node -e ' *)"
     ]
   }
 }
