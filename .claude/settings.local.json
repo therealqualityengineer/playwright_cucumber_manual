@@ -29,7 +29,8 @@
       "PowerShell(Get-ChildItem \"$env:LOCALAPPDATA\\\\Microsoft\\\\WinGet\" -Recurse -Filter \"claude.exe\" -ErrorAction SilentlyContinue | Select-Object FullName; Get-ChildItem \"C:\\\\Program Files\" -Recurse -Filter \"claude.exe\" -ErrorAction SilentlyContinue | Select-Object FullName; Get-ChildItem \"$env:APPDATA\" -Recurse -Filter \"claude.exe\" -ErrorAction SilentlyContinue | Select-Object FullName)",
       "Bash(npm show *)",
       "Bash(node -e \"const v = JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\('latest versions:', v.slice\\(-5\\).join\\(', '\\)\\)\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "PowerShell($env:PATH; \\(Get-Command gh -ErrorAction SilentlyContinue\\).Source)"
     ]
   }
 }
