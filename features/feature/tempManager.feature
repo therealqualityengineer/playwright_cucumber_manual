@@ -38,7 +38,7 @@ Feature: Temp Manager Functionality
       | Certification             | RN                |
       | Specialty                 | ER                |
     Then the temp id should be generated successfully in the url
-    Given the user added the Flat pay of '<Pay Amount>' and '<Bill Amount>' to Pay and Bill amounts
+    And the user added the Flat pay of '<Pay Amount>' and '<Bill Amount>' to Pay and Bill amounts
     Then the user verifies Flat Pay enabled
 
     Examples:
