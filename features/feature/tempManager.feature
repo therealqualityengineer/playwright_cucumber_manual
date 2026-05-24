@@ -22,7 +22,7 @@ Feature: Temp Manager Functionality
     Then the temp id should be generated successfully in the url
 
   @regression @2222
-  Scenario: Enable Flat Pay for a temp
+  Scenario Outline: Enable Flat Pay for a temp
     And the user create a new temp with the following details
       | Field                     | Value             |
       | First Name                | <RandomAlphabets> |
@@ -38,5 +38,11 @@ Feature: Temp Manager Functionality
       | Certification             | RN                |
       | Specialty                 | ER                |
     Then the temp id should be generated successfully in the url
-    Given the user added the Flat pay of '55' and '110' to Pay and Bill amounts
+    Given the user added the Flat pay of '<Pay Amount>' and '<Bill Amount>' to Pay and Bill amounts
     Then the user verifies Flat Pay enabled
+
+    Examples:
+      | Pay Amount | Bill Amount |
+      |         55 |         110 |
+      |         85 |         150 |
+      |        100 |         300 |
