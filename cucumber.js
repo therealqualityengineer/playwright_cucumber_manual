@@ -12,7 +12,7 @@ module.exports = {
 
     parallel: 0,
 
-    retry: 1,
+    retry: 0,
 
     format: [
       'progress',

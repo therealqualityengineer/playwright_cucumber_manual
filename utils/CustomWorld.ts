@@ -4,6 +4,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { ClientManagerPage } from '../pages/ClientManagerPage';
 import { TempManagerPage } from '../pages/TempManagerPage';
 import { OrderManagerPage } from '../pages/OrderManagerPage';
+import { ReportManagerPage } from '../pages/ReportManagerPage';
 
 export class CustomWorld extends World {
 
@@ -19,6 +20,8 @@ export class CustomWorld extends World {
 
    orderManagerPage!: OrderManagerPage;
 
+   reportManagerPage!: ReportManagerPage;
+
    clientName?: string;
 
    clientId?: string;
@@ -28,4 +31,6 @@ export class CustomWorld extends World {
    tempId?: string;
 
    orderId?: string;
+
+   downloadedReportName?: string;
 }
