@@ -37,5 +37,6 @@
     "jsx": "react-jsx",
     "moduleDetection": "force",
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
   }
 }

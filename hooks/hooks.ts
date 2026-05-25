@@ -17,6 +17,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { ClientManagerPage } from '../pages/ClientManagerPage';
 import { TempManagerPage } from '../pages/TempManagerPage';
 import { OrderManagerPage } from '../pages/OrderManagerPage';
+import { ReportManagerPage } from '../pages/ReportManagerPage';
 
 setWorldConstructor(CustomWorld);
 
@@ -54,6 +55,9 @@ Before(async function (this: CustomWorld) {
    this.orderManagerPage =
       new OrderManagerPage(this.page);
 
+   this.reportManagerPage =
+      new ReportManagerPage(this.page);
+
 });
 
 After(async function (this: CustomWorld, scenario) {
@@ -86,5 +90,12 @@ After(async function (this: CustomWorld, scenario) {
 AfterAll(async function () {
 
    await browser.close();
+
+   const downloadsDir = path.join(process.cwd(), 'downloads');
+   if (fs.existsSync(downloadsDir)) {
+      fs.readdirSync(downloadsDir).forEach(file =>
+         fs.rmSync(path.join(downloadsDir, file), { force: true })
+      );
+   }
 
 });

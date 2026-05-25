@@ -1,6 +1,7 @@
 import { Page } from '@playwright/test';
 import envData from '../test-data/env-Data';
 import users from '../test-data/users.json';
+import ApplicationUrls from '../test-data/ApplicationUrls';
 
 export class LoginPage {
   private readonly usernameInput;
@@ -50,6 +51,19 @@ export class LoginPage {
       password = users.default.password;
     }
     return { username, password };
+  }
+
+  async navigateToSection(section: string) {
+    const sectionUrlMap: Record<string, string> = {
+      'Report Manager': ApplicationUrls.ReportPage,
+      'Temp Manager':   ApplicationUrls.TempPage,
+      'Client Manager': ApplicationUrls.ClientPage,
+      'Order Manager':  ApplicationUrls.OrderPage,
+    };
+    const partialUrl = sectionUrlMap[section];
+    if (!partialUrl) throw new Error(`Unknown section: ${section}`);
+    const base = new URL(this.page.url()).origin;
+    await this.page.goto(`${base}${partialUrl}`);
   }
 
   async login(application: string, credential: string) {

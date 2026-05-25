@@ -2,10 +2,17 @@
   "cucumber.features": [
     "features/feature/**/*.feature"
   ],
-
   "cucumber.glue": [
     "features/stepDef/**/*.ts"
   ],
-
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.acceptSuggestionOnEnter": "on",
+  "editor.tabCompletion": "on",
+  "editor.suggestSelection": "first"
 }
