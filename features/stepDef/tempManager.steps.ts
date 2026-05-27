@@ -22,6 +22,9 @@ Given('the user create a new temp with the following details', async function (t
     const tempFirstName = details['First Name'];
     if (tempFirstName !== undefined) this.tempFirstName = tempFirstName;
 
+    const tempEmail = details['Primary Email'];
+    if (tempEmail !== undefined) this.tempEmail = tempEmail;
+
     console.log("Temp First Name:", this.tempFirstName)
     await this.tempManagerPage.navigateToNewTemp();
     await this.tempManagerPage.createTemp(details);

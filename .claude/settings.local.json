@@ -35,7 +35,8 @@
       "Bash(sort -t_ -k8 -n)",
       "Read(//tmp/**)",
       "Bash(node inspect-report-page.js)",
-      "Bash(dir /a)"
+      "Bash(dir /a)",
+      "PowerShell(cd \"C:\\\\Users\\\\ArunRamalingam\\(Ext\\)\\\\OneDrive - Tietoevry\\\\Documents\\\\GitHub\\\\playwright_cucumber_manual\"; npm run test:tag -- @9898 2>&1)"
     ]
   }
 }

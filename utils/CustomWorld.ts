@@ -4,7 +4,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { ClientManagerPage } from '../pages/ClientManagerPage';
 import { TempManagerPage } from '../pages/TempManagerPage';
 import { OrderManagerPage } from '../pages/OrderManagerPage';
-import { ReportManagerPage } from '../pages/ReportManagerPage';
+import { ReportManagerPage } from '../pages/reportManagerPage';
 
 export class CustomWorld extends World {
 
@@ -27,6 +27,8 @@ export class CustomWorld extends World {
    clientId?: string;
 
    tempFirstName?: string;
+
+   tempEmail?: string;
 
    tempId?: string;
 

@@ -1,4 +1,4 @@
-﻿import { Page } from '@playwright/test';
+﻿import { Page, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -38,5 +38,14 @@ export class ReportManagerPage {
         await download.saveAs(path.join(downloadsDir, filename));
 
         return filename;
+    }
+
+    async verifyDownloadedReport(filePath: string, values: string[]): Promise<void> {
+        const content = fs.readFileSync(filePath, 'utf8');
+        for (const value of values) {
+            if (value) {
+                expect(content).toContain(value);
+            }
+        }
     }
 }

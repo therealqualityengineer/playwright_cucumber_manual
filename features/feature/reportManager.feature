@@ -24,3 +24,7 @@ Feature: Report Manager Functionality
     And the user generate the 'Temp Profiles' report with the following details
       | Temp Name | <tempFirstName> |
     Then the report should be downloaded successfully and report name start with 'tempprofiles'
+    And the user open the downloaded report and verify the temp details in the report with the following details
+      | Values          |
+      | <tempFirstName> |
+      | <tempEmail>     |
