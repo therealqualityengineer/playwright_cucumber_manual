@@ -1,15 +1,20 @@
-# Playwright + Cucumber BDD Framework
+# CLAUDE.md
 
-## Overview
-
-TypeScript-based test automation framework using Playwright for browser control and Cucumber for BDD-style test definition. Tests run against a ColdFusion web portal (`wfportal`) across multiple environments.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
 
 ```bash
-npm test                          # Run all tests
-npm run test:tag -- @smoke        # Run by tag (e.g. @smoke, @regression, @12345)
-npm run report                    # Open HTML report in browser
+npm test                          # Run all tests (serially — parallel: 0)
+npm run test:tag -- @smoke        # Run by tag (e.g. @smoke, @regression, @api, @12345)
+npm run lint                      # ESLint across all .ts source directories
+npm run report                    # Open HTML report (reports/cucumber-report.html)
+npm run allure:report             # Generate + open Allure report
+```
+
+To view a Playwright trace from a failed scenario:
+```bash
+npx playwright show-trace allure-results/traces/<trace>.zip
 ```
 
 ## Project Structure
@@ -19,55 +24,65 @@ features/
   feature/        # Gherkin .feature files (one per domain entity)
   stepDef/        # Step definition .ts files (one per feature file)
 hooks/
-  hooks.ts        # Before/After hooks — browser lifecycle + page object init
+  hooks.ts        # BeforeAll/AfterAll (browser) + Before/After (context, page, page objects)
 pages/            # Page Object classes (one per domain entity)
 test-data/
-  env-Data.ts     # Environment URL map (Env_QA, Env_Dev, Env_HF)
-  users.json      # Credentials keyed by username
-  ResolveDynamicData.ts  # Random value generators
+  env-Data.ts     # Environment → login URL map
+  ApplicationUrls.ts  # App-relative paths (e.g. /wfportal/clientmanager.cfm)
+  apiConfig.ts    # API base URLs + credentials per environment
+  users.json      # Credentials keyed by username; 'default' key = default creds
+  ResolveDynamicData.ts  # Random value generators + date resolver
 utils/
   CustomWorld.ts  # Cucumber World — shared state across steps
 ```
 
 ## Architecture Patterns
 
+### Browser lifecycle
+- `BeforeAll`: launches a single Chromium browser (non-headless, shared across all scenarios)
+- `Before`: creates a new `BrowserContext` + `Page` per scenario, instantiates all page objects, starts tracing
+- `After`: on failure — attaches a full-page screenshot and saves a trace zip to `allure-results/traces/`; always closes the context
+- `AfterAll`: closes the browser; cleans up `downloads/`
+
 ### Page Objects (`pages/`)
 - One class per domain entity (e.g. `ClientManagerPage`, `TempManagerPage`)
-- Constructor accepts `Page` from Playwright; stored as `private page: Page`
-- Selectors use Playwright's `getByRole` / `getByPlaceholder` — no CSS/XPath
-- `fillField(field, value)` uses a `switch` to map DataTable field names to locators
-- URL-relative navigation: derive `base` from `this.page.url()` then navigate to a known path
+- Constructor accepts `Page`; stored as `private page: Page`
+- Selectors use `getByRole` / `getByPlaceholder` — no CSS or XPath
+- `fillField(field, value)` maps DataTable field names to locators via a `switch`; throws on unknown fields
+- Navigation uses `ApplicationUrls` constants: derive `base` from `this.page.url()`, append the path constant
 
 ### Step Definitions (`features/stepDef/`)
-- One file per feature, importing only the page objects it needs via `CustomWorld`
-- Dynamic data placeholders resolved in step code before passing to the page:
-  - `<RandomAlphabets>` → `RandomAlphabets()`
-  - `<RandomNumbers>` → `RandomNumbers()`
-  - `<RandomEmail>` → `RandomEmail()`
-- Shared scenario state (e.g. `this.clientName`, `this.clientId`) stored on `CustomWorld`
+- One file per feature; access page objects via `CustomWorld` properties
+- Dynamic placeholders resolved in step code before passing to the page:
+
+  | Placeholder | Resolver |
+  |---|---|
+  | `<RandomAlphabets>` | `RandomAlphabets()` |
+  | `<RandomNumbers>` | `RandomNumbers()` |
+  | `<RandomEmail>` | `RandomEmail()` |
+  | `<RandomString>` | `RandomString()` |
+  | `<Today>` | `ResolveDate('<Today>')` → `MM/DD/YYYY` |
+  | `<Today+N>` / `<Today-N>` | `ResolveDate(placeholder)` → offset date |
+  | `<this.fieldName>` | replace with `this.fieldName` from CustomWorld at runtime |
+
+- Shared scenario state (e.g. `this.clientName`, `this.tempId`) stored on `CustomWorld` — used to pass values between steps within a scenario
 
 ### CustomWorld (`utils/CustomWorld.ts`)
 - Extends Cucumber's `World`
-- Declares `browser`, `context`, `page` (Playwright types)
-- Declares one page object property per page class
-- Declares typed scenario-state properties (e.g. `clientId?: string`)
-- Add new page objects and state properties here when adding a new domain entity
+- Declares `context` (`BrowserContext`), `page`, and one typed property per page class
+- Declares typed scenario-state properties (e.g. `clientId?: string`, `tempEmail?: string`)
+- Add new page class properties and scenario-state fields here when adding a new domain entity
 
-### Hooks (`hooks/hooks.ts`)
-- `Before`: launches Chromium (non-headless), creates context/page, instantiates **all** page objects
-- `After`: closes browser
-- When adding a new page class, import it and instantiate it in `Before`
-
-### Test Data (`test-data/`)
-- `env-Data.ts`: environment → login URL map; add new envs here
-- `users.json`: credentials object keyed by username; `default` key holds default creds
-- `ResolveDynamicData.ts`: pure functions returning random strings — add new generators here
+### API Testing (`pages/APItestPage.ts`)
+- Uses `this.page.request` (Playwright's built-in API client) — no separate HTTP lib needed
+- Auth via Basic auth header; base URL resolved from the current page's origin via `apiConfig`
+- API base path: `/wfportal/clearConnect/2_0/`
 
 ## Adding a New Feature
 
-1. Create `pages/XxxPage.ts` — implement `navigateTo*`, `create*`, `waitFor*Id`, and private `fillField`
+1. Create `pages/XxxPage.ts` — implement `navigateTo*`, `create*`, `waitFor*Id`, and private `fillField`; use `ApplicationUrls` for paths
 2. Add `xxxPage!: XxxPage` to `CustomWorld` and import it
-3. Instantiate `this.xxxPage = new XxxPage(this.page)` in `hooks.ts` `Before`
+3. Instantiate `this.xxxPage = new XxxPage(this.page)` in the `Before` hook in `hooks.ts`
 4. Create `features/feature/xxx.feature` with appropriate tags and a `Background` login step
 5. Create `features/stepDef/xxx.steps.ts` — resolve dynamic data, call page methods, store state on `this`
 
@@ -77,23 +92,21 @@ utils/
 |-----|---------|
 | `@smoke` | Critical path, fast subset |
 | `@regression` | Full regression suite |
+| `@api` | API-level tests via ClearConnect |
 | `@<ticketId>` | Ticket-level targeting (e.g. `@23455`) |
-
-Run a specific tag: `npm run test:tag -- @regression`
 
 ## Environments
 
-| Key | URL |
-|-----|-----|
+| Key | Login URL |
+|-----|-----------|
 | `Env_QA` | `ctmsqa.contingenttalentmanagement.com` |
 | `Env_Dev` | `ctmsdev.contingenttalentmanagement.com` |
 | `Env_HF` | `ctmsqahf.contingenttalentmanagement.com` |
 
-Login step format: `Given the user login to the application 'Env_QA' with 'testuser_01' credentials`  
-Use `'default'` as credential key to use the default username from `users.json`.
+Login step format: `Given the user login to the application 'Env_QA' with 'testuser_01' credentials`
 
 ## Configuration
 
-- `cucumber.js`: entry point — points at `features/feature/**/*.feature`, requires `hooks/**/*.ts` and `features/stepDef/**/*.ts` via `ts-node`
-- `tsconfig.json`: strict mode, `commonjs` modules, `noUncheckedIndexedAccess` enabled
-- Reports output to `reports/cucumber-report.html`
+- `cucumber.js`: glob `features/feature/**/*.feature`, requires hooks + step defs via `ts-node`; `parallel: 0` (serial), `retry: 0`; outputs HTML + Allure reports
+- `tsconfig.json`: strict mode, `commonjs`, `noUncheckedIndexedAccess` enabled
+- `.eslintrc.json`: `@typescript-eslint/no-floating-promises` and `@typescript-eslint/await-thenable` enforced — all async calls must be awaited
