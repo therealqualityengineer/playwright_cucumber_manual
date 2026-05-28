@@ -73,12 +73,21 @@ utils/
 - Declares typed scenario-state properties (e.g. `clientId?: string`, `tempEmail?: string`)
 - Add new page class properties and scenario-state fields here when adding a new domain entity
 
-### API Testing (`pages/APItestPage.ts`)
-- Uses `this.page.request` (Playwright's built-in API client) — no separate HTTP lib needed
-- Auth via Basic auth header; base URL resolved from the current page's origin via `apiConfig`
-- API base path: `/wfportal/clearConnect/2_0/`
+### API Testing (`pages/APItestPage.ts` + `features/stepDef/APItest.steps.ts`)
+- Single generic method `callApi(method, params)` on `APItestPage` — handles GET and POST; base URL resolved from the current page's origin via `apiConfig`; auth via Basic header
+- API base path: `/wfportal/clearConnect/2_0/`; `action` is always auto-injected from the API name in the step text — never put it in the DataTable
+- `API_METHOD_MAP` in `APItest.steps.ts` is the registry that maps action name → HTTP method; the step throws if the name is not registered
+- Step pattern: `Given the user perform 'actionName' API call with the following details`; DataTable rows are query params (GET) or will be body params (POST)
+- Response handling in the `Then` assertion step: top-level array → uses `[0]`; object with `rows` key → uses `rows[0]`; plain object → used as-is
+- `<this.*>` tokens supported in both the API call step and the assertion step: `<this.tempId>`, `<this.tempFirstName>`, `<this.tempEmail>`, `<this.clientId>`, `<this.clientName>`
 
-## Adding a New Feature
+## Adding a New API Action
+
+1. Add one entry to `API_METHOD_MAP` in `features/stepDef/APItest.steps.ts`: `actionName: 'GET'`
+2. If the action uses a `<this.*>` placeholder not yet listed, add a resolver branch in both the `Given` and `Then` steps in `APItest.steps.ts`, and declare the property on `CustomWorld`
+3. Write the scenario in `features/feature/APItest.feature` — assert against the exact field names the API returns
+
+## Adding a New UI Feature
 
 1. Create `pages/XxxPage.ts` — implement `navigateTo*`, `create*`, `waitFor*Id`, and private `fillField`; use `ApplicationUrls` for paths
 2. Add `xxxPage!: XxxPage` to `CustomWorld` and import it
