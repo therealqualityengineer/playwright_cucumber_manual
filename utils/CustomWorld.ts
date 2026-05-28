@@ -5,6 +5,7 @@ import { ClientManagerPage } from '../pages/ClientManagerPage';
 import { TempManagerPage } from '../pages/TempManagerPage';
 import { OrderManagerPage } from '../pages/OrderManagerPage';
 import { ReportManagerPage } from '../pages/reportManagerPage';
+import { APItestPage } from '../pages/APItestPage';
 
 export class CustomWorld extends World {
 
@@ -21,6 +22,10 @@ export class CustomWorld extends World {
    orderManagerPage!: OrderManagerPage;
 
    reportManagerPage!: ReportManagerPage;
+
+   apiTestPage!: APItestPage;
+
+   apiResponse?: unknown;
 
    clientName?: string;
 

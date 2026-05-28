@@ -18,6 +18,7 @@ import { ClientManagerPage } from '../pages/ClientManagerPage';
 import { TempManagerPage } from '../pages/TempManagerPage';
 import { OrderManagerPage } from '../pages/OrderManagerPage';
 import { ReportManagerPage } from '../pages/reportManagerPage';
+import { APItestPage } from '../pages/APItestPage';
 
 setWorldConstructor(CustomWorld);
 
@@ -57,6 +58,9 @@ Before(async function (this: CustomWorld) {
 
    this.reportManagerPage =
       new ReportManagerPage(this.page);
+
+   this.apiTestPage =
+      new APItestPage(this.page);
 
 });
 
