@@ -3,7 +3,7 @@ Feature: Report Manager Functionality
   Background:
     Given the user login to the application 'Env_QA' with 'testuser_01' credentials
 
-  @regression @9898
+  @regression
   Scenario: Download and verify Temp Profiles report
     And the user create a new temp with the following details
       | Field                     | Value             |
@@ -29,7 +29,7 @@ Feature: Report Manager Functionality
       | <tempFirstName> |
       | <tempEmail>     |
 
-  @regression @999
+  @regression
   Scenario: Download and verify Temp Profiles by Certification report
     And the user create a new temp with the following details
       | Field         | Value             |

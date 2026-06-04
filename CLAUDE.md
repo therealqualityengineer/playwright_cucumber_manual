@@ -2,11 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Setup
+
+```bash
+npm install
+npx playwright install        # Install Chromium browser binary
+```
+
 ## Commands
 
 ```bash
 npm test                      # Run all tests (serially — parallel: 0)
 npm run tag -- @smoke         # Run by tag (e.g. @smoke, @regression, @api, @23455)
+npm run name -- "scenario name"  # Run by scenario name substring
+npm run line -- features/feature/tempManager.feature:12  # Run by file:line
 npm run lint                  # ESLint across all .ts source directories
 npm run report                # Open HTML report (reports/cucumber-report.html)
 npm run allure:report         # Generate + open Allure report
@@ -48,14 +57,15 @@ utils/
 
 ### Page Objects (`pages/`)
 - All page classes extend `BasePage`, which provides `navigateTo(path)` — derives the origin from `this.page.url()` and appends the given path
-- Constructor accepts `Page` (passed to `super(page)`); selectors use `getByRole` / `getByPlaceholder` — no CSS or XPath
+- Constructor accepts `Page` (passed to `super(page)`); selectors use `getByRole` / `getByPlaceholder` / `getByLabel` / `getByText` — no CSS or XPath
 - Each entity page exports a typed details interface (e.g. `TempDetails`, `ClientDetails`) with required identity fields and optional defaultable fields
-- A `DEFAULT_*_DETAILS` constant inside the page file holds the defaults typed as `Required<Omit<Interface, 'requiredFields'>>` — TypeScript errors if a new optional field is added without a corresponding default
+- A `DEFAULT_*_DETAILS` constant (not exported) inside the page file holds the defaults typed as `Required<Omit<Interface, 'requiredFields'>>` — TypeScript errors if a new optional field is added without a corresponding default
 - `create*(details)` merges `{ ...DEFAULT_*_DETAILS, ...details }` so DataTable values override defaults; omitted fields fall back to defaults
 - Private `fillField(field, value)` maps DataTable field names to locators via a `switch`; throws on unknown fields
 
 ### Step Definitions (`features/stepDef/`)
 - One file per feature; access page objects via `CustomWorld` properties
+- DataTable rows are iterated with `dataTable.raw().slice(1)` (skips the header row); each `row[0]` is the field name, `row[1]` is the value
 - Dynamic placeholders resolved in step code before passing to the page:
 
   | Placeholder | Resolver |
@@ -68,7 +78,7 @@ utils/
   | `<Today+N>` / `<Today-N>` | `ResolveDate(placeholder)` → offset date |
   | `<this.fieldName>` | replace with `this.fieldName` from CustomWorld at runtime |
 
-- DataTable rows are built as `Partial<TDetails>` using `field as keyof TDetails`, then cast to `TDetails` when calling the page method
+- Build `Partial<TDetails>` from the iterated rows using `field as keyof TDetails`, then cast to `TDetails` when calling the page method
 - Shared scenario state (e.g. `this.clientName`, `this.tempId`) stored on `CustomWorld` — used to pass values between steps within a scenario
 
 ### CustomWorld (`utils/CustomWorld.ts`)
@@ -121,6 +131,7 @@ Login step format: `Given the user login to the application 'Env_QA' with 'testu
 
 ## Configuration
 
+- `hooks/hooks.ts`: `setDefaultTimeout(60 * 1000)` — each step times out after 60 seconds
 - `cucumber.js`: glob `features/feature/**/*.feature`, requires hooks + step defs via `ts-node`; `parallel: 0` (serial), `retry: 0`; outputs HTML + Allure reports
 - `tsconfig.json`: strict mode, `commonjs`, `noUncheckedIndexedAccess` enabled
 - `.eslintrc.json`: `@typescript-eslint/no-floating-promises` and `@typescript-eslint/await-thenable` enforced — all async calls must be awaited
