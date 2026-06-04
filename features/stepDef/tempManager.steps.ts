@@ -1,21 +1,22 @@
 import { Given, Then, DataTable } from '@cucumber/cucumber';
 import { CustomWorld } from '../../utils/CustomWorld';
 import { RandomAlphabets, RandomNumbers, RandomEmail } from '../../test-data/ResolveDynamicData';
+import { TempDetails } from '../../pages/TempManagerPage';
 
 Given('the user create a new temp with the following details', async function (this: CustomWorld, dataTable: DataTable) {
-    const details: Record<string, string> = {};
+    const details: Partial<TempDetails> = {};
 
     for (const row of dataTable.raw().slice(1)) {
         const field = row[0] ?? '';
         const value = row[1] ?? '';
         if (value === '<RandomAlphabets>') {
-            details[field] = RandomAlphabets();
+            details[field as keyof TempDetails] = RandomAlphabets();
         } else if (value === '<RandomNumbers>') {
-            details[field] = RandomNumbers();
+            details[field as keyof TempDetails] = RandomNumbers();
         } else if (value === '<RandomEmail>') {
-            details[field] = RandomEmail();
+            details[field as keyof TempDetails] = RandomEmail();
         } else {
-            details[field] = value;
+            details[field as keyof TempDetails] = value;
         }
     }
 
@@ -27,7 +28,7 @@ Given('the user create a new temp with the following details', async function (t
 
     console.log("Temp First Name:", this.tempFirstName)
     await this.tempManagerPage.navigateToNewTemp();
-    await this.tempManagerPage.createTemp(details);
+    await this.tempManagerPage.createTemp(details as TempDetails);
 });
 
 Then('the temp id should be generated successfully in the url', async function (this: CustomWorld) {

@@ -1,17 +1,23 @@
 import { expect, Page } from '@playwright/test';
+import { BasePage } from './BasePage';
 
-export class OrderManagerPage {
-    constructor(private page: Page) {}
+export class OrderManagerPage extends BasePage {
+    private readonly newOrderLink = this.page.getByRole('link', { name: 'New', exact: true });
+    private readonly orderCreatedText = this.page.getByText('Your order has been created.');
+    private readonly orderIdLink = this.page.locator("//td[contains(text(),'Your order has been created.')]/child::a");
+
+    constructor(page: Page) {
+        super(page);
+    }
 
     async navigateToClassicOrderPage() {
-        const base = new URL(this.page.url()).origin;
-        await this.page.goto(`${base}/wfportal/ordermanager-legacy.cfm`);
+        await this.navigateTo('/wfportal/ordermanager-legacy.cfm');
     }
 
     async createOrder(details: Record<string, string>) {
         const [popup] = await Promise.all([
             this.page.context().waitForEvent('page'),
-            this.page.getByRole('link', { name: 'New', exact: true }).click()
+            this.newOrderLink.click()
         ]);
         await popup.waitForLoadState();
 
@@ -20,7 +26,7 @@ export class OrderManagerPage {
         }
 
         await popup.locator('input[name="createdone"]').first().click();
-        await popup.getByText("Both").first().click();
+        await popup.getByText('Both').first().click();
         await Promise.all([
             popup.waitForEvent('close'),
             popup.locator('#confirmed1').click(),
@@ -29,8 +35,8 @@ export class OrderManagerPage {
     }
 
     async waitForOrderId(): Promise<string> {
-        await expect(this.page.getByText("Your order has been created.")).toBeVisible();
-        const orderId = (await this.page.locator("//td[contains(text(),'Your order has been created.')]/child::a").allTextContents()).toString().trim();
+        await expect(this.orderCreatedText).toBeVisible();
+        const orderId = (await this.orderIdLink.allTextContents()).toString().trim();
         return orderId;
     }
 

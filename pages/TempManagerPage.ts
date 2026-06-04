@@ -1,15 +1,65 @@
 import { Page, expect } from '@playwright/test';
+import { BasePage } from './BasePage';
 
-export class TempManagerPage {
-    constructor(private page: Page) {}
+export interface TempDetails {
+    'First Name': string;
+    'Last Name': string;
+    'Primary Email': string;
+    Address?: string;
+    City?: string;
+    State?: string;
+    ZipCode?: string;
+    Status?: string;
+    Region?: string;
+    'Contract (1099) / EE (W2)'?: string;
+    Certification?: string;
+    Specialty?: string;
+}
 
-    async navigateToNewTemp() {
-        const base = new URL(this.page.url()).origin;
-        await this.page.goto(`${base}/wfportal/tempview.cfm?newtemp=yes`);
+const DEFAULT_TEMP_DETAILS: Required<Omit<TempDetails, 'First Name' | 'Last Name' | 'Primary Email'>> = {
+    Address: '345 Park Avenue',
+    City: 'New York',
+    State: 'NY',
+    ZipCode: '10154',
+    Status: 'Active',
+    Region: 'JasonTest',
+    'Contract (1099) / EE (W2)': 'EE',
+    Certification: 'RN',
+    Specialty: 'ER',
+};
+
+export class TempManagerPage extends BasePage {
+    private readonly firstNameInput = this.page.getByRole('row', { name: 'First Name' }).getByRole('textbox');
+    private readonly lastNameInput = this.page.getByRole('row', { name: 'Last Name' }).getByRole('textbox');
+    private readonly primaryEmailInput = this.page.getByRole('row', { name: /Primary Email/ }).getByRole('textbox');
+    private readonly permanentAddressGroup = this.page.getByRole('group', { name: 'Permanent Address' });
+    private readonly permanentAddressInput = this.permanentAddressGroup.getByPlaceholder('Enter a location');
+    private readonly permanentCityInput = this.permanentAddressGroup.getByRole('row', { name: 'City' }).getByRole('textbox');
+    private readonly permanentStateSelect = this.permanentAddressGroup.getByRole('row', { name: 'State' }).getByRole('combobox');
+    private readonly permanentZipInput = this.permanentAddressGroup.getByRole('row', { name: 'Zip' }).getByRole('textbox');
+    private readonly statusSelect = this.page.getByRole('row', { name: /^Status/ }).getByRole('combobox');
+    private readonly regionSelect = this.page.getByRole('row', { name: /^Region/ }).getByRole('combobox');
+    private readonly contractOrEeSelect = this.page.locator('select[name="contract_or_ee"]');
+    private readonly certificationColumn = this.page.locator('#undefined_certsColumn');
+    private readonly specialtyColumn = this.page.locator('#undefined_specsColumn');
+    private readonly tempPayEditButton = this.page.locator("[name='temppayedit']").first();
+    private readonly flatPayRadio = this.page.locator("[name='howpay'][value='flat']");
+    private readonly payFlatInput = this.page.locator("[name='payflat']");
+    private readonly billFlatInput = this.page.locator("[name='billflat']");
+    private readonly tempPayUpdateButton = this.page.locator("[name='temppayupdate']").first();
+    private readonly flatPayCell = this.page.getByRole('cell', { name: 'Flat Pay', exact: true });
+
+    constructor(page: Page) {
+        super(page);
     }
 
-    async createTemp(details: Record<string, string>) {
-        for (const [field, value] of Object.entries(details)) {
+    async navigateToNewTemp() {
+        await this.navigateTo('/wfportal/tempview.cfm?newtemp=yes');
+    }
+
+    async createTemp(details: TempDetails) {
+        const resolved = { ...DEFAULT_TEMP_DETAILS, ...details };
+        for (const [field, value] of Object.entries(resolved)) {
             await this.fillField(field, value);
         }
         await this.page.getByRole('button', { name: 'Save' }).first().click();
@@ -28,60 +78,54 @@ export class TempManagerPage {
     private async fillField(field: string, value: string) {
         switch (field) {
             case 'First Name':
-                await this.page.getByRole('row', { name: 'First Name' }).getByRole('textbox').fill(value);
+                await this.firstNameInput.fill(value);
                 break;
             case 'Last Name':
-                await this.page.getByRole('row', { name: 'Last Name' }).getByRole('textbox').fill(value);
+                await this.lastNameInput.fill(value);
                 break;
             case 'Primary Email':
-                await this.page.getByRole('row', { name: /Primary Email/ }).getByRole('textbox').fill(value);
+                await this.primaryEmailInput.fill(value);
                 break;
             case 'Address':
-                await this.page.getByRole('group', { name: 'Permanent Address' }).getByPlaceholder('Enter a location').fill(value);
+                await this.permanentAddressInput.fill(value);
                 break;
             case 'City':
-                await this.page.getByRole('group', { name: 'Permanent Address' }).getByRole('row', { name: 'City' }).getByRole('textbox').fill(value);
+                await this.permanentCityInput.fill(value);
                 break;
             case 'State':
-                await this.page.getByRole('group', { name: 'Permanent Address' }).getByRole('row', { name: 'State' }).getByRole('combobox').selectOption(value);
+                await this.permanentStateSelect.selectOption(value);
                 break;
             case 'ZipCode':
-                await this.page.getByRole('group', { name: 'Permanent Address' }).getByRole('row', { name: 'Zip' }).getByRole('textbox').fill(value);
+                await this.permanentZipInput.fill(value);
                 break;
             case 'Status':
-                await this.page.getByRole('row', { name: /^Status/ }).getByRole('combobox').selectOption(value);
+                await this.statusSelect.selectOption(value);
                 break;
             case 'Region':
-                await this.page.getByRole('row', { name: /^Region/ }).getByRole('combobox').selectOption(value);
+                await this.regionSelect.selectOption(value);
                 break;
             case 'Contract (1099) / EE (W2)':
-                await this.page.locator('select[name="contract_or_ee"]').selectOption(value);
+                await this.contractOrEeSelect.selectOption(value);
                 break;
             case 'Certification':
-                await this.page.locator('#undefined_certsColumn').getByRole('listitem', { name: value, exact: true }).click();
+                await this.certificationColumn.getByRole('listitem', { name: value, exact: true }).click();
                 break;
             case 'Specialty':
-                await this.page.locator('#undefined_specsColumn').getByRole('listitem', { name: value, exact: true }).click();
+                await this.specialtyColumn.getByRole('listitem', { name: value, exact: true }).click();
                 break;
         }
     }
 
-    async navigateTo(url : string) {
-        const base = new URL(this.page.url()).origin;
-        await this.page.goto(`${base}${url}`, { waitUntil: 'domcontentloaded' });
-    }
-
-    async addFlatAmounts(pay : string, bill : string){
-        await this.page.locator("[name='temppayedit']").first().click();
-        await this.page.locator("[name='howpay'][value='flat']").click();
-        await this.page.locator("[name='payflat']").fill(pay);
-        await this.page.locator("[name='billflat']").fill(bill);
-        await this.page.locator("[name='temppayupdate']").first().click();
+    async addFlatAmounts(pay: string, bill: string) {
+        await this.tempPayEditButton.click();
+        await this.flatPayRadio.click();
+        await this.payFlatInput.fill(pay);
+        await this.billFlatInput.fill(bill);
+        await this.tempPayUpdateButton.click();
         await this.page.waitForLoadState('domcontentloaded');
     }
 
     async verifyFlatPayEnabled() {
-        const flatPayCell = this.page.getByRole('cell', { name: 'Flat Pay', exact: true });
-        await expect(flatPayCell.locator('xpath=following-sibling::td').getByText('Enabled')).toBeVisible();
+        await expect(this.flatPayCell.locator('xpath=following-sibling::td').getByText('Enabled')).toBeVisible();
     }
 }

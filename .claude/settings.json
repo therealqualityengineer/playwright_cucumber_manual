@@ -29,5 +29,8 @@
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_console_messages"
     ]
+  },
+  "enabledPlugins": {
+    "commit-commands@claude-plugins-official": true
   }
 }

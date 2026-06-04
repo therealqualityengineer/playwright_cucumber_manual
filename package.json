@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "cucumber-js",
-    "test:tag": "cucumber-js --tags",
+    "tag": "cucumber-js --tags",
+    "line": "cucumber-js",
+    "name": "cucumber-js --name",
     "report": "open reports/cucumber-report.html",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",

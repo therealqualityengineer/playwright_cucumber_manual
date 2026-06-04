@@ -1,8 +1,11 @@
 import { Page } from '@playwright/test';
 import apiConfig from '../test-data/apiConfig';
+import { BasePage } from './BasePage';
 
-export class APItestPage {
-    constructor(private page: Page) {}
+export class APItestPage extends BasePage {
+    constructor(page: Page) {
+        super(page);
+    }
 
     async callApi(method: string, params: Record<string, string>): Promise<unknown> {
         const { username, password } = apiConfig.credentials;

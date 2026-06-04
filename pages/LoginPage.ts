@@ -2,16 +2,15 @@ import { Page } from '@playwright/test';
 import envData from '../test-data/env-Data';
 import users from '../test-data/users.json';
 import ApplicationUrls from '../test-data/ApplicationUrls';
+import { BasePage } from './BasePage';
 
-export class LoginPage {
-  private readonly usernameInput;
-  private readonly passwordInput;
-  private readonly loginButton;
+export class LoginPage extends BasePage {
+  private readonly usernameInput = this.page.getByRole('textbox', { name: 'Username' });
+  private readonly passwordInput = this.page.getByRole('textbox', { name: 'Password' });
+  private readonly loginButton = this.page.getByRole('button', { name: 'Login' });
 
-  constructor(private page: Page) {
-    this.usernameInput = page.getByRole('textbox', { name: 'Username' });
-    this.passwordInput = page.getByRole('textbox', { name: 'Password' });
-    this.loginButton = page.getByRole('button', { name: 'Login' });
+  constructor(page: Page) {
+    super(page);
   }
 
   async navigate() {
@@ -62,8 +61,7 @@ export class LoginPage {
     };
     const partialUrl = sectionUrlMap[section];
     if (!partialUrl) throw new Error(`Unknown section: ${section}`);
-    const base = new URL(this.page.url()).origin;
-    await this.page.goto(`${base}${partialUrl}`);
+    await this.navigateTo(partialUrl);
   }
 
   async login(application: string, credential: string) {

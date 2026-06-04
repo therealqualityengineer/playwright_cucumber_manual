@@ -1,35 +1,44 @@
-﻿import { Page, expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { BasePage } from './BasePage';
 
-export class ReportManagerPage {
-    private TempProfileReportLink;
+export class ReportManagerPage extends BasePage {
+    private readonly tempProfileReportLink = this.page.locator('#Profiles').getByRole('link', { name: 'Temp Profiles', exact: true });
+    private readonly tempNameFilterButton = this.page.locator('#tfobj_textItem0');
+    private readonly searchInput = this.page.locator('#searchfor');
+    private readonly searchButton = this.page.locator('[name="search"]');
+    private readonly finderList = this.page.locator('ul.finderSelector li');
+    private readonly popupCloseButton = this.page.locator('#PopupID [name="close"]');
+    private readonly popupOverlay = this.page.locator('#PopupID');
+    private readonly pdfFormatRadio = this.page.locator('#format');
+    private readonly submitButton = this.page.locator('#btnSubmit1');
 
-    constructor(private page: Page) {
-        this.TempProfileReportLink = this.page.locator('#Profiles').getByRole('link', { name: 'Temp Profiles', exact: true });
+    constructor(page: Page) {
+        super(page);
     }
 
     async navigateToReport(ReportName: string) {
         if (ReportName === 'Temp Profiles') {
-            await this.TempProfileReportLink.click();
+            await this.tempProfileReportLink.click();
             await this.page.waitForLoadState('networkidle');
         }
     }
 
     async generateTempProfilesReport(tempName: string): Promise<string> {
         if (tempName) {
-            await this.page.locator('#tfobj_textItem0').click();
-            await this.page.locator('#searchfor').fill(tempName);
-            await this.page.locator('[name="search"]').click();
-            await this.page.locator('ul.finderSelector li').filter({ hasText: tempName }).click();
-            await this.page.locator('#PopupID [name="close"]').click();
-            await this.page.locator('#PopupID').waitFor({ state: 'hidden' });
+            await this.tempNameFilterButton.click();
+            await this.searchInput.fill(tempName);
+            await this.searchButton.click();
+            await this.finderList.filter({ hasText: tempName }).click();
+            await this.popupCloseButton.click();
+            await this.popupOverlay.waitFor({ state: 'hidden' });
         }
 
-        await this.page.locator('#format').check();
+        await this.pdfFormatRadio.check();
 
         const downloadPromise = this.page.waitForEvent('download');
-        await this.page.locator('#btnSubmit1').click();
+        await this.submitButton.click();
         const download = await downloadPromise;
 
         const filename = download.suggestedFilename();
