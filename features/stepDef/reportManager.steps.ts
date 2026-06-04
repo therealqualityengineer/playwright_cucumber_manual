@@ -9,9 +9,12 @@ When('the user navigate to the {string} section', async function (this: CustomWo
 
 Then('the user generate the {string} report with the following details', async function (this: CustomWorld, reportType: string, dataTable: DataTable) {
     const data = dataTable.rowsHash();
+
     const rawTempName = data['Temp Name'] ?? '';
-    const tempName = rawTempName === '<tempFirstName>' ? (this.tempFirstName ?? '') : rawTempName;
-    const certification = data['Certification'] ?? '';
+    const tempName = rawTempName === '<this.tempFirstName>' ? (this.tempFirstName ?? '') : rawTempName;
+
+    const rawCertification = data['Certification'] ?? '';
+    const certification = rawCertification === '<this.certificationFilter>' ? '' : rawCertification;
 
     await this.reportManagerPage.navigateToReport(reportType);
     this.downloadedReportName = await this.reportManagerPage.generateReport({ tempName, certification });
@@ -25,8 +28,8 @@ Then('the report should be downloaded successfully and report name start with {s
 Then('the user open the downloaded report and verify the temp details in the report with the following details', async function (this: CustomWorld, dataTable: DataTable) {
     const rawValues = dataTable.raw().slice(1).map(row => row[0] ?? '');
     const values = rawValues.map(v => {
-        if (v === '<tempFirstName>') return this.tempFirstName ?? '';
-        if (v === '<tempEmail>') return this.tempEmail ?? '';
+        if (v === '<this.tempFirstName>') return this.tempFirstName ?? '';
+        if (v === '<this.tempEmail>') return this.tempEmail ?? '';
         return v;
     });
 

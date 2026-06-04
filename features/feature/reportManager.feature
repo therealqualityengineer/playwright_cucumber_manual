@@ -22,12 +22,12 @@ Feature: Report Manager Functionality
     Then the temp id should be generated successfully in the url
     And the user navigate to the 'Report Manager' section
     And the user generate the 'Temp Profiles' report with the following details
-      | Temp Name | <tempFirstName> |
+      | Temp Name | <this.tempFirstName> |
     Then the report should be downloaded successfully and report name start with 'tempprofiles'
     And the user open the downloaded report and verify the temp details in the report with the following details
-      | Values          |
-      | <tempFirstName> |
-      | <tempEmail>     |
+      | Values               |
+      | <this.tempFirstName> |
+      | <this.tempEmail>     |
 
   @regression
   Scenario: Download and verify Temp Profiles by Certification report
@@ -39,10 +39,32 @@ Feature: Report Manager Functionality
     Then the temp id should be generated successfully in the url
     And the user navigate to the 'Report Manager' section
     And the user generate the 'Temp Profiles by Certification' report with the following details
-      | Temp Name     | <tempFirstName> |
-      | Certification | RN              |
+      | Temp Name     | <this.tempFirstName> |
+      | Certification | RN                   |
     Then the report should be downloaded successfully and report name start with 'tempprofiles'
     And the user open the downloaded report and verify the temp details in the report with the following details
-      | Values          |
-      | <tempFirstName> |
-      | <tempEmail>     |
+      | Values               |
+      | <this.tempFirstName> |
+      | <this.tempEmail>     |
+
+  @regression
+  Scenario: Create temp, download Temp Profiles report, and verify temp exists via API
+    And the user create a new temp with the following details
+      | Field         | Value             |
+      | First Name    | <RandomAlphabets> |
+      | Last Name     | <RandomAlphabets> |
+      | Primary Email | <RandomEmail>     |
+    Then the temp id should be generated successfully in the url
+    And the user navigate to the 'Report Manager' section
+    And the user generate the 'Temp Profiles' report with the following details
+      | Temp Name | <this.tempFirstName> |
+    Then the report should be downloaded successfully and report name start with 'tempprofiles'
+    Given the user perform 'getTemps' API call with the following details
+      | Key        | Value                |
+      | tempIdIn   | <this.tempId>        |
+      | statusIn   | Active               |
+      | resultType | json                 |
+    Then the API response should contain the following details
+      | Key       | Values               |
+      | firstName | <this.tempFirstName> |
+      | tempId    | <this.tempId>        |
