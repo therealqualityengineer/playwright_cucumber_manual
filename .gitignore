@@ -7,4 +7,5 @@ downloads/
 *.d.ts
 *.d.ts.map
 .playwright-mcp/
+.mcp.json
 test-output.txt
