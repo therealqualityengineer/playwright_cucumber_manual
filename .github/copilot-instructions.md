@@ -1,69 +1,80 @@
 # Copilot Instructions — Playwright + Cucumber Test Framework
 
-**Stack**: Playwright + Cucumber (Gherkin) + TypeScript
+**Stack**: Playwright + Cucumber + TypeScript
 
-For detailed patterns and procedures see [CLAUDE.md](../CLAUDE.md) and [.instructions.md](../.instructions.md).
-
----
-
-## Test Structure
-
-Tests are organized as **feature + steps pairs** under `features/`:
-
-```
-features/feature/<name>.feature       # Gherkin scenarios
-features/stepDef/<name>.steps.ts      # Step implementations (1 file per feature)
-pages/<Name>Page.ts                   # Page Object class (1 per domain entity)
-```
-
-Each domain entity (e.g. `tempManager`) gets exactly one file in each directory. No subdirectories.
+This repo is a Playwright+BBD test framework. For full implementation guidance, use [CLAUDE.md](../CLAUDE.md) and [.instructions.md](../.instructions.md).
 
 ---
 
-## Page Object Model
+## Key Workflow
 
-- All page classes extend `BasePage` (`pages/BasePage.ts`)
-- Use **role-based locators only** — `getByRole`, `getByPlaceholder`, `getByLabel`. Never CSS selectors or XPath
-- Each page exports a `*Details` interface (required identity fields + optional defaultable fields) and a `DEFAULT_*_DETAILS` constant covering all optional fields
-- A private `fillField(field, value)` method maps DataTable field names to locators via a `switch`; it throws on unknown fields
-
-See [pages/TempManagerPage.ts](../pages/TempManagerPage.ts) as the canonical example.
-
----
-
-## Step Definition Mapping
-
-**One Gherkin step text maps to exactly one step definition. Never duplicate a step.**
-
-- One step file per feature file, accessing page objects via `CustomWorld` properties
-- Resolve dynamic placeholders (`<RandomAlphabets>`, `<RandomEmail>`, `<Today+N>`, `<this.fieldName>`, etc.) **in step code** before passing values to page methods — the page layer only receives concrete values
-- Capture scenario-level state on `CustomWorld` (`this.tempId`, `this.clientName`, etc.) to share values between steps
-
-See [utils/CustomWorld.ts](../utils/CustomWorld.ts) for the `PageObjects` and `ScenarioState` interfaces.
+- Install dependencies: `npm install`
+- Install Playwright browsers: `npx playwright install`
+- Run tests: `npm run test`
+- Run tagged tests: `npm run tag -- @smoke`
+- Generate/open report: `npm run report`
+- Lint TypeScript: `npm run lint`
 
 ---
 
-## Credentials & Environments
+## Test structure
 
-- **Never hardcode credentials per scenario.** All credentials live in [test-data/users.json](../test-data/users.json); environment URLs in [test-data/env-Data.ts](../test-data/env-Data.ts)
-- Every feature uses a parameterized `Background` login step:
+- `features/feature/*.feature` — Gherkin scenarios
+- `features/stepDef/*.steps.ts` — one step-definition file per feature
+- `pages/*Page.ts` — page object classes, one per domain entity
+- `hooks/` — browser and scenario lifecycle hooks
+- `test-data/` — env URLs, credentials, and dynamic data helpers
+- `utils/CustomWorld.ts` — shared scenario state and page object wiring
 
-  ```gherkin
-  Background:
-    Given the user login to the application 'Env_QA' with 'testuser_01' credentials
-  ```
+---
 
-- The step resolves the URL and credentials from config — never embed them in scenario text
+## Page object conventions
+
+- Every page class extends `BasePage` (`pages/BasePage.ts`)
+- Use role-based locators only: `getByRole`, `getByPlaceholder`, `getByLabel`
+- Do not use CSS selectors or XPath
+- Implement a private `fillField(field, value)` switch that throws on unknown fields
+- Use `*Details` interfaces plus `DEFAULT_*_DETAILS` defaults for optional inputs
+
+---
+
+## Step-definition rules
+
+- One unique Gherkin step maps to one step definition
+- Resolve dynamic values in step code before calling page methods
+- Capture scenario state on `CustomWorld` for reuse across steps
+- Do not store credentials or URLs in feature text
+
+### Dynamic placeholders
+
+Resolve these in step code:
+- `<RandomAlphabets>` / `<RandomNumbers>` / `<RandomString>` / `<RandomEmail>`
+- `<Today>`, `<Today+N>`, `<Today-N>`
+- `<this.someField>` → replace with `CustomWorld` state
+
+---
+
+## API test conventions
+
+- API tests live under `features/feature/APItest.feature` and `features/stepDef/APItest.steps.ts`
+- Use `APItestPage` to call ClearConnect APIs
+- `API_METHOD_MAP` maps action names to HTTP methods
+- Do not include the `action` parameter in DataTables; it is derived from step text
+- Assertions should normalize responses: arrays use `[0]`, objects with `rows` use `rows[0]`
+
+---
+
+## Environments and credentials
+
+- Environment URLs are configured in `test-data/env-Data.ts`
+- Credentials are stored in `test-data/users.json`
+- Use parameterized login in feature `Background` sections
 
 ---
 
 ## Tags
 
-Every scenario must carry at least one tag:
-
-| Tag | Purpose |
-|-----|---------|
-| `@smoke` | Critical path, fast subset |
-| `@regression` | Full regression suite |
-| `@api` | API tests via ClearConnect |
-| `@<ticketId>` | Ticket-level targeting (e.g. `@23455`) |
+- `@smoke` — fast critical paths
+- `@regression` — full regression suite
+- `@api` — API tests
+- `@<ticketId>` — issue-level targeting

@@ -1,9 +1,11 @@
 {
   "cucumber.features": [
-    "features/feature/**/*.feature"
+    "features/feature/**/*.feature",
+    ".github/skills/**/*.feature"
   ],
   "cucumber.glue": [
-    "features/stepDef/**/*.ts"
+    "features/stepDef/**/*.ts",
+    ".github/skills/**/*.steps.ts"
   ],
   "editor.formatOnSave": true,
   "editor.quickSuggestions": {
