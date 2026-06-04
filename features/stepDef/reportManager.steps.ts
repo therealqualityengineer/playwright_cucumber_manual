@@ -11,9 +11,10 @@ Then('the user generate the {string} report with the following details', async f
     const data = dataTable.rowsHash();
     const rawTempName = data['Temp Name'] ?? '';
     const tempName = rawTempName === '<tempFirstName>' ? (this.tempFirstName ?? '') : rawTempName;
+    const certification = data['Certification'] ?? '';
 
     await this.reportManagerPage.navigateToReport(reportType);
-    this.downloadedReportName = await this.reportManagerPage.generateTempProfilesReport(tempName);
+    this.downloadedReportName = await this.reportManagerPage.generateReport({ tempName, certification });
 })
 
 Then('the report should be downloaded successfully and report name start with {string}', async function (this: CustomWorld, prefix: string) {

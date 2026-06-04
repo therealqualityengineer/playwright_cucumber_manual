@@ -30,6 +30,7 @@
       "mcp__playwright__browser_console_messages"
     ]
   },
+  "enabledMcpjsonServers": ["playwright"],
   "enabledPlugins": {
     "commit-commands@claude-plugins-official": true
   }

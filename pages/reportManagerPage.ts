@@ -3,14 +3,26 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePage } from './BasePage';
 
+export interface ReportFilters {
+    tempName?: string;
+    certification?: string;
+}
+
 export class ReportManagerPage extends BasePage {
-    private readonly tempProfileReportLink = this.page.locator('#Profiles').getByRole('link', { name: 'Temp Profiles', exact: true });
+    // Temp name popup — scoped by its unique search input to avoid the dual #PopupID ambiguity
     private readonly tempNameFilterButton = this.page.locator('#tfobj_textItem0');
+    private readonly tempNamePopup = this.page.locator('#PopupID').filter({ has: this.page.locator('#searchfor') });
     private readonly searchInput = this.page.locator('#searchfor');
     private readonly searchButton = this.page.locator('[name="search"]');
     private readonly finderList = this.page.locator('ul.finderSelector li');
-    private readonly popupCloseButton = this.page.locator('#PopupID [name="close"]');
-    private readonly popupOverlay = this.page.locator('#PopupID');
+    private readonly tempNamePopupCloseButton = this.tempNamePopup.locator('[name="close"]');
+
+    // Certification popup — scoped by its unique cert search input
+    private readonly certificationFilterButton = this.page.locator('#csf_cert_list li').first();
+    private readonly certSearchInput = this.page.locator('#certstxt');
+    private readonly certFinderList = this.page.locator('#undefined_certsColumn ul li.zuiBtn');
+    private readonly certPopupCloseButton = this.page.locator('#PopupID').filter({ has: this.page.locator('#certstxt') }).locator('.CloseBtn');
+
     private readonly pdfFormatRadio = this.page.locator('#format');
     private readonly submitButton = this.page.locator('#btnSubmit1');
 
@@ -18,34 +30,49 @@ export class ReportManagerPage extends BasePage {
         super(page);
     }
 
-    async navigateToReport(ReportName: string) {
-        if (ReportName === 'Temp Profiles') {
-            await this.tempProfileReportLink.click();
-            await this.page.waitForLoadState('networkidle');
-        }
+    async navigateToReport(reportName: string): Promise<void> {
+        await this.page.locator('#Profiles').getByRole('link', { name: reportName, exact: true }).click();
+        await this.page.waitForLoadState('networkidle');
     }
 
-    async generateTempProfilesReport(tempName: string): Promise<string> {
-        if (tempName) {
-            await this.tempNameFilterButton.click();
-            await this.searchInput.fill(tempName);
-            await this.searchButton.click();
-            await this.finderList.filter({ hasText: tempName }).click();
-            await this.popupCloseButton.click();
-            await this.popupOverlay.waitFor({ state: 'hidden' });
+    async generateReport(filters: ReportFilters): Promise<string> {
+        if (filters.tempName) {
+            await this.selectTempFilter(filters.tempName);
         }
+        if (filters.certification) {
+            await this.selectCertificationFilter(filters.certification);
+        }
+        return this.downloadReport();
+    }
 
+    private async selectTempFilter(tempName: string): Promise<void> {
+        await this.tempNameFilterButton.click();
+        await this.searchInput.waitFor({ state: 'visible' });
+        await this.searchInput.fill(tempName);
+        await this.searchButton.click();
+        await this.finderList.filter({ hasText: tempName }).first().click();
+        await this.tempNamePopupCloseButton.click();
+        await this.searchInput.waitFor({ state: 'hidden' });
+    }
+
+    private async selectCertificationFilter(certification: string): Promise<void> {
+        await this.certificationFilterButton.click();
+        await this.certSearchInput.waitFor({ state: 'visible' });
+        await this.certSearchInput.pressSequentially(certification);
+        await this.certFinderList.getByText(certification, { exact: true }).first().click();
+        await this.certPopupCloseButton.click();
+        await this.certSearchInput.waitFor({ state: 'hidden' });
+    }
+
+    private async downloadReport(): Promise<string> {
         await this.pdfFormatRadio.check();
-
         const downloadPromise = this.page.waitForEvent('download');
         await this.submitButton.click();
         const download = await downloadPromise;
-
         const filename = download.suggestedFilename();
         const downloadsDir = path.join(process.cwd(), 'downloads');
         fs.mkdirSync(downloadsDir, { recursive: true });
         await download.saveAs(path.join(downloadsDir, filename));
-
         return filename;
     }
 
