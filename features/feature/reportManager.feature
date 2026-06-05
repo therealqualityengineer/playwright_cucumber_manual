@@ -48,6 +48,20 @@ Feature: Report Manager Functionality
       | <this.tempEmail>     |
 
   @regression
+  Scenario: Download and verify Client Profiles report
+    And the user create a new client with the following details
+      | Field      | Value             |
+      | ClientName | <RandomAlphabets> |
+    Then the client id should be generated successfully in the url
+    And the user navigate to the 'Report Manager' section
+    And the user generate the 'Client Profiles' report with the following details
+      | Client Name | <this.clientName> |
+    Then the report should be downloaded successfully and report name start with 'clientprofile'
+    And the user open the downloaded report and verify the temp details in the report with the following details
+      | Values            |
+      | <this.clientName> |
+
+  @regression
   Scenario: Create temp, download Temp Profiles report, and verify temp exists via API
     And the user create a new temp with the following details
       | Field         | Value             |

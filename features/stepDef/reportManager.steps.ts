@@ -16,8 +16,11 @@ Then('the user generate the {string} report with the following details', async f
     const rawCertification = data['Certification'] ?? '';
     const certification = rawCertification === '<this.certificationFilter>' ? '' : rawCertification;
 
+    const rawClientName = data['Client Name'] ?? '';
+    const clientName = rawClientName === '<this.clientName>' ? (this.clientName ?? '') : rawClientName;
+
     await this.reportManagerPage.navigateToReport(reportType);
-    this.downloadedReportName = await this.reportManagerPage.generateReport({ tempName, certification });
+    this.downloadedReportName = await this.reportManagerPage.generateReport({ tempName, certification, clientName });
 })
 
 Then('the report should be downloaded successfully and report name start with {string}', async function (this: CustomWorld, prefix: string) {
@@ -30,6 +33,7 @@ Then('the user open the downloaded report and verify the temp details in the rep
     const values = rawValues.map(v => {
         if (v === '<this.tempFirstName>') return this.tempFirstName ?? '';
         if (v === '<this.tempEmail>') return this.tempEmail ?? '';
+        if (v === '<this.clientName>') return this.clientName ?? '';
         return v;
     });
 
