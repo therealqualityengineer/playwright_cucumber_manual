@@ -48,6 +48,52 @@ If an exact or semantically matching step exists, **reuse it**. If similar but n
 
 ### 2. Define or Extend the Page Class
 
+#### Search Popup Selection (`BasePage.selectFromSearchPopup`)
+
+The application has a shared "search popup" pattern used to select a Temp or Client by name — the same 6-step flow (open popup → fill search → click Search → pick result → close → wait hidden) appears on many pages.
+
+**Never re-implement this flow inline.** All page methods that open a search popup and select an entity must delegate to:
+
+```typescript
+// In BasePage.ts
+async selectFromSearchPopup(triggerLocator: Locator, searchText: string): Promise<void>
+```
+
+**Trigger words**: when a scenario spec or `Notes:` says **"select temp using popup"** or **"select client using popup"** (or any search-popup selection), the corresponding page method **must** call `this.selectFromSearchPopup(...)`.
+
+**Pattern — page class side** (actual example from `ReportManagerPage.ts`):
+```typescript
+private readonly tempFilterButton = this.page.locator('#tfobj_textItem0');
+private readonly clientFilterButton = this.page.locator('#cfobj_textItem0');
+
+async generateReport(filters: ReportFilters): Promise<string> {
+    if (filters.tempName) {
+        await this.selectFromSearchPopup(this.tempFilterButton, filters.tempName);
+    }
+    if (filters.clientName) {
+        await this.selectFromSearchPopup(this.clientFilterButton, filters.clientName);
+    }
+    // ... download logic
+}
+```
+
+**Pattern — TempManagerPage Facilities tab** (another real example):
+```typescript
+private readonly selectClientsItem = this.page.getByText('Select Clients', { exact: true });
+
+async applyFacilitiesFilters(filters: Record<string, string>) {
+    for (const [field, value] of Object.entries(filters)) {
+        if (field === 'ClientName') {
+            await this.selectFromSearchPopup(this.selectClientsItem, value);
+        }
+    }
+}
+```
+
+The trigger locator is page-specific (CSS ID like `#tfobj_textItem0` or a `getByText` locator). The search/pick/close logic always lives in `BasePage.selectFromSearchPopup`.
+
+---
+
 If implementing a **new domain entity** (e.g., `InvoiceManager`):
 
 1. Create `pages/InvoiceManagerPage.ts` extending `BasePage` with:
@@ -269,6 +315,7 @@ See [references/example-invoiceManager.feature](./references/example-invoiceMana
 - [ ] `CustomWorld` updated with new page object + any new state fields
 - [ ] TypeScript strict mode — all async calls awaited
 - [ ] No hardcoded URLs, credentials, or static test data
+- [ ] Any search popup (select temp / select client) uses `BasePage.selectFromSearchPopup` — no inline open/search/pick/close block
 
 ## Architecture Overview
 

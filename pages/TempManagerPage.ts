@@ -49,6 +49,15 @@ export class TempManagerPage extends BasePage {
     private readonly tempPayUpdateButton = this.page.locator("[name='temppayupdate']").first();
     private readonly flatPayCell = this.page.getByRole('cell', { name: 'Flat Pay', exact: true });
 
+    // Facilities tab locators
+    private readonly facilitiesTabLink = this.page.getByRole('link', { name: 'Facilities' });
+    private readonly selectClientsItem = this.page.getByText('Select Clients', { exact: true });
+    private readonly facilitiesRegionSelect = this.page.locator('select[name="search_region"]');
+    private readonly facilitiesFilterButton = this.page.locator('#btnSubmit');
+    private readonly orientedCheckbox = this.page.locator('input[name="Oriented"]').first();
+    private readonly preferredRadio = this.page.locator('input[name^="status_"][value="1"]').first();
+    private readonly facilitiesSaveButton = this.page.getByRole('button', { name: 'save' }).first();
+
     constructor(page: Page) {
         super(page);
     }
@@ -127,5 +136,48 @@ export class TempManagerPage extends BasePage {
 
     async verifyFlatPayEnabled() {
         await expect(this.flatPayCell.locator('xpath=following-sibling::td').getByText('Enabled')).toBeVisible();
+    }
+
+    async navigateToProfile(tempId: string) {
+        await this.navigateTo(`/wfportal/tempview.cfm?tempid=${tempId}`);
+    }
+
+    async openFacilitiesTab() {
+        await this.facilitiesTabLink.click();
+        await this.page.waitForLoadState('domcontentloaded');
+    }
+
+    async applyFacilitiesFilters(filters: Record<string, string>) {
+        for (const [field, value] of Object.entries(filters)) {
+            if (field === 'ClientName') {
+                await this.selectFromSearchPopup(this.selectClientsItem, value);
+            } else if (field === 'Region') {
+                await this.facilitiesRegionSelect.selectOption(value);
+            }
+        }
+        await this.facilitiesFilterButton.click();
+        await this.page.waitForLoadState('domcontentloaded');
+    }
+
+    async setFacilitiesStatus(field: string, value: string) {
+        if (field === 'Oriented' && value === 'Check') {
+            await this.orientedCheckbox.check();
+        } else if (field === 'Preferred' && value === 'Select') {
+            await this.preferredRadio.click();
+        }
+        await this.facilitiesSaveButton.click();
+        await this.page.waitForLoadState('networkidle');
+    }
+
+    async verifyMessage(message: string) {
+        await expect(this.page.getByText(message)).toBeVisible();
+    }
+
+    async verifyFacilitiesStatus(field: string, status: string) {
+        if (field === 'Oriented' && status === 'Checked') {
+            await expect(this.orientedCheckbox).toBeChecked();
+        } else if (field === 'Preferred' && status === 'Selected') {
+            await expect(this.preferredRadio).toBeChecked();
+        }
     }
 }
