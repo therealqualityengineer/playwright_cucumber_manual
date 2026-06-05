@@ -46,3 +46,53 @@ Feature: Temp Manager Functionality
       |         55 |         110 |
       |         85 |         150 |
       |        100 |         300 |
+
+  @regression @666
+  Scenario: Verify client oriented with temp
+    And the user create a new temp with the following details
+      | Field         | Value             |
+      | First Name    | <RandomAlphabets> |
+      | Last Name     | <RandomAlphabets> |
+      | Primary Email | <RandomEmail>     |
+    Then the temp id should be generated successfully in the url
+    And the user create a new client with the following details
+      | Field      | Value             |
+      | ClientName | <RandomAlphabets> |
+    Then the client id should be generated successfully in the url
+    And the user opens the 'temp' profile page
+    And the user opens the 'Facilities' tab and applies the following filters
+      | Field      | Value             |
+      | ClientName | <this.clientName> |
+      | Region     | All Regions       |
+    And the user sets the following status on the Facilities page
+      | Field    | Value |
+      | Oriented | Check |
+    Then the user verifies the 'Facilities Successfully Updated.' message
+    Then the user verifies that the following status is set on the 'Facilities' page
+      | Field    | Status  |
+      | Oriented | Checked |
+
+  @regression
+  Scenario: Verify client Preferred with temp
+    And the user create a new temp with the following details
+      | Field         | Value             |
+      | First Name    | <RandomAlphabets> |
+      | Last Name     | <RandomAlphabets> |
+      | Primary Email | <RandomEmail>     |
+    Then the temp id should be generated successfully in the url
+    And the user create a new client with the following details
+      | Field      | Value             |
+      | ClientName | <RandomAlphabets> |
+    Then the client id should be generated successfully in the url
+    And the user opens the 'temp' profile page
+    And the user opens the 'Facilities' tab and applies the following filters
+      | Field      | Value             |
+      | ClientName | <this.clientName> |
+      | Region     | All Regions       |
+    And the user sets the following status on the Facilities page
+      | Field     | Value  |
+      | Preferred | Select |
+    Then the user verifies the 'Facilities Successfully Updated.' message
+    Then the user verifies that the following status is set on the 'Facilities' page
+      | Field     | Status   |
+      | Preferred | Selected |

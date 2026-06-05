@@ -28,39 +28,76 @@ grep -r "create" features/feature features/stepDef
 grep -r "create" features/feature
 
 # Case-insensitive search
-grep -ri "invoice" features/
+grep -ri "report" features/
 ```
 
 #### Option 2: VS Code Find
 1. Press `Ctrl+Shift+F` to open global Find
 2. Use glob pattern: `features/**/*.feature,features/**/*.steps.ts`
-3. Search term: e.g., `create invoice`
+3. Search term: e.g., `create temp`
 
 ### Canonical Steps (Already Exist)
 
-These steps are **already implemented** across the project. Always reuse:
+These steps are **already implemented**. Always reuse the exact text.
 
-| Step Text | Location | When to Use |
-|-----------|----------|------------|
-| `Given the user login to the application '...' with '...' credentials` | All Background sections | Every feature file — parameterizes env + credentials |
-| `When the user create <entity> with the following details` | tempManager, clientManager steps | Creating any domain entity via form |
-| `Then the user should see <entity> created successfully` | Multiple features | Confirmation after creation |
-| `And the user navigate to <entity> details page` | Multiple features | Navigate to detail view after creation |
-| `Given the user perform '...' API call with the following details` | APItest.steps.ts | API-level testing with DataTable params |
-| `Then the API response should contain` | APItest.steps.ts | Assert API response fields |
+#### Core Entity Steps
+
+| Step Text | Location | Captures |
+|-----------|----------|---------|
+| `Given the user login to the application {string} with {string} credentials` | login.steps.ts | — |
+| `And the user create a new temp with the following details` | tempManager.steps.ts | `this.tempFirstName`, `this.tempEmail` |
+| `Then the temp id should be generated successfully in the url` | tempManager.steps.ts | `this.tempId` |
+| `And the user create a new client with the following details` | clientManager.steps.ts | `this.clientName` |
+| `Then the client id should be generated successfully in the url` | clientManager.steps.ts | `this.clientId` |
+| `And the user create a new order with the following details` | orderManager.steps.ts | — |
+| `Then the order id should be generated successfully` | orderManager.steps.ts | `this.orderId` |
+
+#### Temp-Specific Steps
+
+| Step Text | Location | Notes |
+|-----------|----------|-------|
+| `And the user added the Flat pay of {string} and {string} to Pay and Bill amounts` | tempManager.steps.ts | Uses `this.tempId` |
+| `Then the user verifies Flat Pay enabled` | tempManager.steps.ts | Asserts flat pay cell |
+| `When the user opens the {string} profile page` | tempManager.steps.ts | Supports `'temp'` |
+| `And the user opens the {string} tab and applies the following filters` | tempManager.steps.ts | Supports `'Facilities'` tab + DataTable |
+| `And the user sets the following status on the Facilities page` | tempManager.steps.ts | Fields: Oriented/Check, Preferred/Select |
+| `Then the user verifies the {string} message` | tempManager.steps.ts | Checks visible message text |
+| `Then the user verifies that the following status is set on the {string} page` | tempManager.steps.ts | Fields: Oriented→Checked, Preferred→Selected |
+
+#### Report Steps
+
+| Step Text | Location | Captures |
+|-----------|----------|---------|
+| `And the user navigate to the {string} section` | reportManager.steps.ts | — (e.g., `'Report Manager'`) |
+| `Then the user generate the {string} report with the following details` | reportManager.steps.ts | `this.downloadedReportName` |
+| `Then the report should be downloaded successfully and report name start with {string}` | reportManager.steps.ts | — |
+| `Then the user open the downloaded report and verify the temp details in the report with the following details` | reportManager.steps.ts | Reads downloaded file, asserts content |
+
+#### API Steps
+
+| Step Text | Location | Notes |
+|-----------|----------|-------|
+| `Given the user perform {string} API call with the following details` | APItest.steps.ts | `action` auto-injected; params via DataTable |
+| `Then the API response should contain the following details` | APItest.steps.ts | Checks `record[key] == expected` |
+
+**Registered API actions in `API_METHOD_MAP`:**
+- `getTemps` → GET
+- `getClients` → GET
 
 ## Matching Rules
 
 ### Exact Match → Reuse
 If your step text is **identical** to an existing step, use the same wording:
 ```gherkin
-# GOOD: Reuses existing "create invoice" step
-When the user create invoice with the following details
-  | invoiceNumber | INV-001 |
+# GOOD: Reuses existing "create temp" step
+And the user create a new temp with the following details
+  | Field         | Value             |
+  | First Name    | <RandomAlphabets> |
+  | Last Name     | <RandomAlphabets> |
+  | Primary Email | <RandomEmail>     |
 
 # BAD: Creates a duplicate step with different wording
-When the user creates a new invoice using
-  | invoiceNumber | INV-001 |
+When the user creates a new temporary worker with these details
 ```
 
 ### Semantic Match → Generalize Existing Step
@@ -75,18 +112,12 @@ When('the user create contractor with the following details', ...);
 **New (one parameterized step):**
 ```typescript
 When('the user create {word} with the following details', async function (entityType: string, dataTable: DataTable) {
-  const pageMap = {
+  const pageMap: Record<string, unknown> = {
     'temporary': this.tempManagerPage,
     'contractor': this.contractorPage,
   };
-  const page = pageMap[entityType];
-  if (!page) throw new Error(`Unknown entity type: ${entityType}`);
   // ... shared logic
 });
-
-// Now both features use the same step:
-When the user create temporary with the following details
-When the user create contractor with the following details
 ```
 
 ### Partial Match → Extend, Don't Duplicate
@@ -94,12 +125,12 @@ If an existing step is 90% what you need, extend it instead of creating a new on
 
 **Existing:**
 ```typescript
-When('the user create temp with the following details', ...);
+Given('the user create a new temp with the following details', ...);
 ```
 
-**New requirement**: Create a temp with a default status
-- **BAD**: Write a separate `When the user create temp with status ...`
-- **GOOD**: Make the existing step accept an optional `status` field in the DataTable; add it to `TempDetails` with a default
+**New requirement**: Create a temp with a non-default Specialty.
+- **BAD**: Write a separate step for it.
+- **GOOD**: Add `Specialty` as a row in the DataTable — the page's `fillField` switch already handles it, and `DEFAULT_TEMP_DETAILS` provides the fallback.
 
 ## Anti-Pattern Examples
 
@@ -107,40 +138,43 @@ When('the user create temp with the following details', ...);
 
 **Feature 1:**
 ```gherkin
-When the user create invoice with the following details
-  | invoiceNumber | INV-001 |
+And the user create a new temp with the following details
+  | Field      | Value             |
+  | First Name | <RandomAlphabets> |
 ```
 
 **Feature 2 (BAD):**
 ```gherkin
-When the user creates a new invoice with these details
-  | invoiceNumber | INV-001 |
+When the user creates a brand-new temp using
+  | Field      | Value             |
+  | First Name | <RandomAlphabets> |
 ```
 
-→ This creates two step definitions that do the same thing. **WRONG!** Refactor to use identical wording.
+→ This creates two step definitions that do the same thing. **WRONG!** Reuse the canonical wording.
 
 ### ❌ Hardcoding Values Instead of Using DataTable
 
 **BAD:**
 ```gherkin
-When the user create invoice number "INV-001" with amount 5000
+When the user creates a temp named "ABCDE" with email "test@gmail.com"
 ```
 
 **GOOD:**
 ```gherkin
-When the user create invoice with the following details
-  | invoiceNumber | INV-001 |
-  | amount        | 5000    |
+And the user create a new temp with the following details
+  | Field         | Value             |
+  | First Name    | <RandomAlphabets> |
+  | Primary Email | <RandomEmail>     |
 ```
 
-**Why**: The second approach is data-driven, reusable across scenarios, and maps cleanly to TypeScript interfaces.
+**Why**: DataTable approach is data-driven, reusable across scenarios, maps cleanly to TypeScript interfaces, and tokens ensure unique values per run.
 
 ### ❌ Ignoring Dynamic Tokens
 
 **BAD:**
 ```typescript
 // Hardcoded date in step definition
-await this.page.fill('dueDate', '06/04/2026');
+await this.page.fill('#dueDate', '06/04/2026');
 ```
 
 **GOOD:**
@@ -154,12 +188,32 @@ for (const row of dataTable.raw().slice(1)) {
         value = ResolveDate(value);   // resolves <Today>, <Today+N>, <Today-N>
     } else if (value === '<RandomAlphabets>') {
         value = RandomAlphabets();
+    } else if (value === '<this.clientName>') {
+        value = this.clientName ?? '';
     }
     details[field as keyof MyDetails] = value;
 }
 ```
 
-**Why**: Tests become date-independent, reusable, and maintainable. Token resolution belongs in the step definition, not in page classes or shared helpers.
+### ❌ Re-implementing search popup inline
+
+**BAD:**
+```typescript
+// DON'T manually open/search/pick/close in a step
+await this.page.locator('#tfobj_textItem0').click();
+await this.page.getByRole('textbox', { name: 'Search for' }).fill(tempName);
+await this.page.getByRole('button', { name: 'Search' }).click();
+await this.page.getByRole('listitem').filter({ hasText: tempName }).first().click();
+await this.page.getByRole('button', { name: 'Close' }).click();
+```
+
+**GOOD:**
+```typescript
+// In the page class, delegate to BasePage:
+await this.selectFromSearchPopup(this.tempFilterButton, tempName);
+```
+
+**Why**: `BasePage.selectFromSearchPopup` is the single shared implementation. Changes apply everywhere.
 
 ## Step Definition Naming Convention
 
@@ -167,10 +221,9 @@ When you write a new step definition, follow the **step text to method name** ma
 
 | Step Text | Step Definition (TypeScript) |
 |-----------|------------------------------|
-| `Given the user login to the application` | `Given('the user login to the application', async ...)` |
-| `When the user create invoice with the following details` | `When('the user create invoice with the following details', async ...)` |
-| `Then the invoice number should match {string}` | `Then('the invoice number should match {string}', async (pattern: string) ...)` |
-| `And the invoice status should be {string}` | `Then('the invoice status should be {string}', async (status: string) ...)` |
+| `Given the user login to the application` | `Given('the user login to the application...', async ...)` |
+| `And the user create a new temp with the following details` | `Given('the user create a new temp with the following details', async ...)` |
+| `Then the temp id should be generated successfully in the url` | `Then('the temp id should be generated successfully in the url', async ...)` |
 
 **Parameterized steps** use `{word}`, `{string}`, `{int}`, `{float}` placeholders:
 - `{word}` → single alphanumeric word (no spaces)

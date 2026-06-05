@@ -57,11 +57,16 @@ utils/
 
 ### Page Objects (`pages/`)
 - All page classes extend `BasePage`, which provides `navigateTo(path)` — derives the origin from `this.page.url()` and appends the given path
-- Constructor accepts `Page` (passed to `super(page)`); selectors use `getByRole` / `getByPlaceholder` / `getByLabel` / `getByText` — no CSS or XPath
+- Constructor accepts `Page` (passed to `super(page)`); prefer `getByRole` / `getByPlaceholder` / `getByLabel` / `getByText` for selectors; use `page.locator(css)` only when semantic locators are unavailable (e.g., dynamically-generated IDs like `#tfobj_textItem0`)
 - Each entity page exports a typed details interface (e.g. `TempDetails`, `ClientDetails`) with required identity fields and optional defaultable fields
 - A `DEFAULT_*_DETAILS` constant (not exported) inside the page file holds the defaults typed as `Required<Omit<Interface, 'requiredFields'>>` — TypeScript errors if a new optional field is added without a corresponding default
 - `create*(details)` merges `{ ...DEFAULT_*_DETAILS, ...details }` so DataTable values override defaults; omitted fields fall back to defaults
 - Private `fillField(field, value)` maps DataTable field names to locators via a `switch`; throws on unknown fields
+
+### BasePage Shared Utilities
+- `BasePage.selectFromSearchPopup(triggerLocator, searchText)` — shared 6-step popup flow used across multiple pages: click trigger → wait for search box → fill text → click Search → pick first matching listitem → close popup → wait hidden
+- **Never re-implement this flow inline** in a page class or step definition — always delegate to `this.selectFromSearchPopup(triggerLocator, name)`
+- Trigger locators are page-specific: `#tfobj_textItem0` (temp picker), `#cfobj_textItem0` (client picker), or a `getByText` locator for other popups
 
 ### Step Definitions (`features/stepDef/`)
 - One file per feature; access page objects via `CustomWorld` properties
@@ -87,6 +92,19 @@ utils/
   - `ScenarioState` — values captured during a scenario and passed between steps (all optional)
 - `CustomWorld implements PageObjects, ScenarioState` ensures TypeScript errors if either interface drifts from the class declaration
 - Add new page class properties to `PageObjects` and new captured values to `ScenarioState` when adding a new domain entity
+
+**Current `ScenarioState` fields and when they are captured:**
+
+| Field                  | Captured by step                                          |
+| ---------------------- | --------------------------------------------------------- |
+| `tempFirstName`        | `the user create a new temp...` (First Name field)        |
+| `tempEmail`            | `the user create a new temp...` (Primary Email field)     |
+| `tempId`               | `the temp id should be generated successfully in the url` |
+| `clientName`           | `the user create a new client...` (ClientName field)      |
+| `clientId`             | `the client id should be generated successfully in the url` |
+| `orderId`              | `the order id should be generated successfully`           |
+| `downloadedReportName` | `the user generate the {string} report...`                |
+| `apiResponse`          | `the user perform {string} API call...`                   |
 
 ### API Testing (`pages/APItestPage.ts` + `features/stepDef/APItest.steps.ts`)
 - Single generic method `callApi(method, params)` on `APItestPage` — handles GET and POST; base URL resolved from the current page's origin via `apiConfig`; auth via Basic header
@@ -128,6 +146,16 @@ utils/
 | `Env_HF` | `ctmsqahf.contingenttalentmanagement.com` |
 
 Login step format: `Given the user login to the application 'Env_QA' with 'testuser_01' credentials`
+
+**Credential used per feature** (each feature uses a specific user):
+
+| Feature file      | Credential  |
+| ----------------- | ----------- |
+| tempManager       | testuser_04 |
+| APItest           | testuser_04 |
+| orderManager      | testuser_03 |
+| reportManager     | testuser_01 |
+| clientManager     | testuser_01 |
 
 ## Configuration
 
