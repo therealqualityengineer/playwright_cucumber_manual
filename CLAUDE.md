@@ -47,87 +47,6 @@ utils/
   CustomWorld.ts  # Cucumber World — shared state across steps
 ```
 
-## Architecture Patterns
-
-### Browser lifecycle
-- `BeforeAll`: launches a single Chromium browser (non-headless, shared across all scenarios)
-- `Before`: creates a new `BrowserContext` + `Page` per scenario, instantiates all page objects, starts tracing
-- `After`: on failure — attaches a full-page screenshot and saves a trace zip to `allure-results/traces/`; always closes the context
-- `AfterAll`: closes the browser; cleans up `downloads/`
-
-### Page Objects (`pages/`)
-- All page classes extend `BasePage`, which provides `navigateTo(path)` — derives the origin from `this.page.url()` and appends the given path
-- Constructor accepts `Page` (passed to `super(page)`); prefer `getByRole` / `getByPlaceholder` / `getByLabel` / `getByText` for selectors; use `page.locator(css)` only when semantic locators are unavailable (e.g., dynamically-generated IDs like `#tfobj_textItem0`)
-- Each entity page exports a typed details interface (e.g. `TempDetails`, `ClientDetails`) with required identity fields and optional defaultable fields
-- A `DEFAULT_*_DETAILS` constant (not exported) inside the page file holds the defaults typed as `Required<Omit<Interface, 'requiredFields'>>` — TypeScript errors if a new optional field is added without a corresponding default
-- `create*(details)` merges `{ ...DEFAULT_*_DETAILS, ...details }` so DataTable values override defaults; omitted fields fall back to defaults
-- Private `fillField(field, value)` maps DataTable field names to locators via a `switch`; throws on unknown fields
-
-### BasePage Shared Utilities
-- `BasePage.selectFromSearchPopup(triggerLocator, searchText)` — shared 6-step popup flow used across multiple pages: click trigger → wait for search box → fill text → click Search → pick first matching listitem → close popup → wait hidden
-- **Never re-implement this flow inline** in a page class or step definition — always delegate to `this.selectFromSearchPopup(triggerLocator, name)`
-- Trigger locators are page-specific: `#tfobj_textItem0` (temp picker), `#cfobj_textItem0` (client picker), or a `getByText` locator for other popups
-
-### Step Definitions (`features/stepDef/`)
-- One file per feature; access page objects via `CustomWorld` properties
-- DataTable rows are iterated with `dataTable.raw().slice(1)` (skips the header row); each `row[0]` is the field name, `row[1]` is the value
-- Dynamic placeholders resolved in step code before passing to the page:
-
-  | Placeholder | Resolver |
-  |---|---|
-  | `<RandomAlphabets>` | `RandomAlphabets()` |
-  | `<RandomNumbers>` | `RandomNumbers()` |
-  | `<RandomEmail>` | `RandomEmail()` |
-  | `<RandomString>` | `RandomString()` |
-  | `<Today>` | `ResolveDate('<Today>')` → `MM/DD/YYYY` |
-  | `<Today+N>` / `<Today-N>` | `ResolveDate(placeholder)` → offset date |
-  | `<this.fieldName>` | replace with `this.fieldName` from CustomWorld at runtime |
-
-- Build `Partial<TDetails>` from the iterated rows using `field as keyof TDetails`, then cast to `TDetails` when calling the page method
-- Shared scenario state (e.g. `this.clientName`, `this.tempId`) stored on `CustomWorld` — used to pass values between steps within a scenario
-
-### CustomWorld (`utils/CustomWorld.ts`)
-- Extends Cucumber's `World` and implements two interfaces:
-  - `PageObjects` — browser infrastructure (`context`, `page`) and all page class instances
-  - `ScenarioState` — values captured during a scenario and passed between steps (all optional)
-- `CustomWorld implements PageObjects, ScenarioState` ensures TypeScript errors if either interface drifts from the class declaration
-- Add new page class properties to `PageObjects` and new captured values to `ScenarioState` when adding a new domain entity
-
-**Current `ScenarioState` fields and when they are captured:**
-
-| Field                  | Captured by step                                          |
-| ---------------------- | --------------------------------------------------------- |
-| `tempFirstName`        | `the user create a new temp...` (First Name field)        |
-| `tempEmail`            | `the user create a new temp...` (Primary Email field)     |
-| `tempId`               | `the temp id should be generated successfully in the url` |
-| `clientName`           | `the user create a new client...` (ClientName field)      |
-| `clientId`             | `the client id should be generated successfully in the url` |
-| `orderId`              | `the order id should be generated successfully`           |
-| `downloadedReportName` | `the user generate the {string} report...`                |
-| `apiResponse`          | `the user perform {string} API call...`                   |
-
-### API Testing (`pages/APItestPage.ts` + `features/stepDef/APItest.steps.ts`)
-- Single generic method `callApi(method, params)` on `APItestPage` — handles GET and POST; base URL resolved from the current page's origin via `apiConfig`; auth via Basic header
-- API base path: `/wfportal/clearConnect/2_0/`; `action` is always auto-injected from the API name in the step text — never put it in the DataTable
-- `API_METHOD_MAP` in `APItest.steps.ts` is the registry that maps action name → HTTP method; the step throws if the name is not registered
-- Step pattern: `Given the user perform 'actionName' API call with the following details`; DataTable rows are query params (GET) or body params (POST)
-- Response handling in the `Then` assertion step: top-level array → uses `[0]`; object with `rows` key → uses `rows[0]`; plain object → used as-is
-- `<this.*>` tokens supported in both the API call step and the assertion step: `<this.tempId>`, `<this.tempFirstName>`, `<this.tempEmail>`, `<this.clientId>`, `<this.clientName>`
-
-## Adding a New API Action
-
-1. Add one entry to `API_METHOD_MAP` in `features/stepDef/APItest.steps.ts`: `actionName: 'GET'`
-2. If the action uses a `<this.*>` placeholder not yet listed, add a resolver branch in both the `Given` and `Then` steps in `APItest.steps.ts`, and declare the property on `CustomWorld`'s `ScenarioState` interface
-3. Write the scenario in `features/feature/APItest.feature` — assert against the exact field names the API returns
-
-## Adding a New UI Feature
-
-1. Create `pages/XxxPage.ts` — extend `BasePage`; export a `XxxDetails` interface (required identity fields + optional defaultable fields); define `DEFAULT_XXX_DETAILS` constant; implement `navigateTo*`, `create*` (merge defaults), `waitFor*Id`, and private `fillField`
-2. Add `xxxPage: XxxPage` to the `PageObjects` interface in `CustomWorld.ts`, declare it with `!` on the class, and import it
-3. Instantiate `this.xxxPage = new XxxPage(this.page)` in the `Before` hook in `hooks.ts`
-4. Create `features/feature/xxx.feature` with appropriate tags and a `Background` login step
-5. Create `features/stepDef/xxx.steps.ts` — build `Partial<XxxDetails>` from DataTable, cast to `XxxDetails`, call page methods, store captured IDs/names on `ScenarioState`
-
 ## Tags
 
 | Tag | Purpose |
@@ -147,19 +66,30 @@ utils/
 
 Login step format: `Given the user login to the application 'Env_QA' with 'testuser_01' credentials`
 
-**Credential used per feature** (each feature uses a specific user):
+**Credential used per feature:**
 
-| Feature file      | Credential  |
-| ----------------- | ----------- |
-| tempManager       | testuser_04 |
-| APItest           | testuser_04 |
-| orderManager      | testuser_03 |
-| reportManager     | testuser_01 |
-| clientManager     | testuser_01 |
+| Feature file  | Credential  |
+| ------------- | ----------- |
+| tempManager   | testuser_04 |
+| APItest       | testuser_04 |
+| orderManager  | testuser_03 |
+| reportManager | testuser_01 |
+| clientManager | testuser_01 |
 
 ## Configuration
 
 - `hooks/hooks.ts`: `setDefaultTimeout(60 * 1000)` — each step times out after 60 seconds
-- `cucumber.js`: glob `features/feature/**/*.feature`, requires hooks + step defs via `ts-node`; `parallel: 0` (serial), `retry: 0`; outputs HTML + Allure reports
+- `cucumber.js`: serial (`parallel: 0`), `retry: 0`; HTML + Allure reports
 - `tsconfig.json`: strict mode, `commonjs`, `noUncheckedIndexedAccess` enabled
-- `.eslintrc.json`: `@typescript-eslint/no-floating-promises` and `@typescript-eslint/await-thenable` enforced — all async calls must be awaited
+- `.eslintrc.json`: `no-floating-promises` and `await-thenable` enforced — all async calls must be awaited
+
+## Skills
+
+Invoke these skills for detailed patterns and procedures:
+
+| Skill | When to use |
+|-------|-------------|
+| `/test-generation` | Generate a new feature file + step definitions from a spec |
+| `/cucumber-patterns` | Author or edit `.feature` / `.steps.ts` files |
+| `/api-test` | Write API assertion steps against the ClearConnect backend |
+| `/create-pr` | Commit, push, and open a GitHub PR |

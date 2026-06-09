@@ -180,4 +180,19 @@ export class TempManagerPage extends BasePage {
             await expect(this.preferredRadio).toBeChecked();
         }
     }
+
+    async verifyDrivingDistanceBetween(type: string, minMiles: number, maxMiles: number): Promise<void> {
+        if (type === 'Permanent') {
+            const getLink = this.page.locator('a[id^="getDrivingDistance_"]').first();
+            await getLink.click();
+            const distanceCell = this.page.locator('td').filter({ hasText: /Distance:\s*\d+\s*miles/ }).first();
+            await distanceCell.waitFor({ state: 'visible' });
+            const text = await distanceCell.textContent() ?? '';
+            const match = text.match(/Distance:\s*(\d+)\s*miles/);
+            if (!match?.[1]) throw new Error(`Could not parse driving distance from cell: "${text}"`);
+            const miles = parseInt(match[1], 10);
+            expect(miles).toBeGreaterThanOrEqual(minMiles);
+            expect(miles).toBeLessThanOrEqual(maxMiles);
+        }
+    }
 }
