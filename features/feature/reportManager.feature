@@ -72,12 +72,12 @@ Feature: Report Manager Functionality
     And the user navigate to the 'Report Manager' section
     And the user generate the 'Temp Profiles' report with the following details
       | Temp Name | <this.tempFirstName> |
-    Then the report should be downloaded successfully and report name start with 'tempprofiles'
+    Then the report should be downloaded successfully and report name start with 'terofiles'
     Given the user perform 'getTemps' API call with the following details
-      | Key        | Value                |
-      | tempIdIn   | <this.tempId>        |
-      | statusIn   | Active               |
-      | resultType | json                 |
+      | Key        | Value         |
+      | tempIdIn   | <this.tempId> |
+      | statusIn   | Active        |
+      | resultType | json          |
     Then the API response should contain the following details
       | Key       | Values               |
       | firstName | <this.tempFirstName> |

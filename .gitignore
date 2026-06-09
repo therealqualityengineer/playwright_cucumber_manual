@@ -8,3 +8,4 @@ downloads/
 *.d.ts.map
 .playwright-mcp/
 test-output.txt
+pipeline-report/
