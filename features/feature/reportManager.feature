@@ -72,7 +72,7 @@ Feature: Report Manager Functionality
     And the user navigate to the 'Report Manager' section
     And the user generate the 'Temp Profiles' report with the following details
       | Temp Name | <this.tempFirstName> |
-    Then the report should be downloaded successfully and report name start with 'terofiles'
+    Then the report should be downloaded successfully and report name start with 'tempprofiles'
     Given the user perform 'getTemps' API call with the following details
       | Key        | Value         |
       | tempIdIn   | <this.tempId> |

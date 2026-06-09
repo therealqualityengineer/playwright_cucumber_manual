@@ -109,13 +109,13 @@ Feature: Temp Manager Functionality
     Then the client id should be generated successfully in the url
     And the user opens the 'temp' profile page
     And the user opens the 'Facilities' tab and applies the following filters
-      | Field      | Value           |
-      | ClientName | <this.clitName> |
-      | Region     | All Regions     |
+      | Field      | Value             |
+      | ClientName | <this.clientName> |
+      | Region     | All Regions       |
     And the user sets the following status on the Facilities page
       | Field     | Value  |
       | Preferred | Select |
-    Then the user verifies the 'Facilities Updated.' message
+    Then the user verifies the 'Facilities Successfully Updated.' message
     Then the user verifies that the following status is set on the 'Facilities' page
       | Field     | Status   |
       | Preferred | Selected |
