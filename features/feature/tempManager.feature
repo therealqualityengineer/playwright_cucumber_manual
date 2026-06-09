@@ -72,6 +72,29 @@ Feature: Temp Manager Functionality
       | Field    | Status  |
       | Oriented | Checked |
 
+  @smoke
+  Scenario: Verify Permanent Driving Distance for temp facility
+    And the user create a new temp with the following details
+      | Field         | Value             |
+      | First Name    | <RandomAlphabets> |
+      | Last Name     | <RandomAlphabets> |
+      | Primary Email | <RandomEmail>     |
+      | Address       | 345 Park Avenue   |
+      | City          | New York          |
+      | State         | NY                |
+      | ZipCode       | 10154             |
+    Then the temp id should be generated successfully in the url
+    And the user create a new client with the following details
+      | Field      | Value             |
+      | ClientName | <RandomAlphabets> |
+    Then the client id should be generated successfully in the url
+    And the user opens the 'temp' profile page
+    And the user opens the 'Facilities' tab and applies the following filters
+      | Field      | Value             |
+      | ClientName | <this.clientName> |
+      | Region     | All Regions       |
+    And the user verifies the 'Permanent' Driving Distance should be between '1530' to '1630'
+
   @regression
   Scenario: Verify client Preferred with temp
     And the user create a new temp with the following details

@@ -86,3 +86,7 @@ Then('the user verifies that the following status is set on the {string} page', 
         await this.tempManagerPage.verifyFacilitiesStatus(field, status);
     }
 })
+
+Then('the user verifies the {string} Driving Distance should be between {string} to {string}', async function (this: CustomWorld, type: string, minMiles: string, maxMiles: string) {
+    await this.tempManagerPage.verifyDrivingDistanceBetween(type, parseInt(minMiles, 10), parseInt(maxMiles, 10));
+})
