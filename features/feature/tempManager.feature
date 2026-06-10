@@ -109,9 +109,9 @@ Feature: Temp Manager Functionality
     Then the client id should be generated successfully in the url
     And the user opens the 'temp' profile page
     And the user opens the 'Facilities' tab and applies the following filters
-      | Field      | Value             |
-      | ClientName | <this.clientName> |
-      | Region     | All Regions       |
+      | Field      | Value          |
+      | ClientName | <this.cliName> |
+      | Region     | All Regions    |
     And the user sets the following status on the Facilities page
       | Field     | Value  |
       | Preferred | Select |
