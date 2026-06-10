@@ -16,3 +16,22 @@ Feature: Client Manager Functionality
       | Region       | North Region       |
       | QuickBooksID | <RandomNumbers>    |
     Then the client id should be generated successfully in the url
+
+  @smoke
+  Scenario: Client Requires Orientation set to yes with Warn
+    And the user create a new client with the following details
+      | Field        | Value             |
+      | ClientName   | <RandomAlphabets> |
+      | QuickBooksID | <RandomNumbers>   |
+    Then the client id should be generated successfully in the url
+    And the user opens the 'client' profile page
+    And the user set following values in 'Settings' page
+      | Field                       | Value |
+      | Client Requires Orientation | Yes   |
+      | On order fill               | Warn  |
+    Then the user verifies the 'Client Settings Successfully Updated' message
+    And the user opens the 'client' profile page
+    Then the user verifies following values in 'Settings' page
+      | Field                       | Value |
+      | Client Requires Orientation | Yes   |
+      | On order fill               | Warn  |
