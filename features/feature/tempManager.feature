@@ -115,7 +115,7 @@ Feature: Temp Manager Functionality
     And the user sets the following status on the Facilities page
       | Field     | Value  |
       | Preferred | Select |
-    Then the user verifies the 'Facilities Updated.' message
+    Then the user verifies the 'Facilities Successfully Updated.' message
     Then the user verifies that the following status is set on the 'Facilities' page
       | Field     | Status   |
       | Preferred | Selected |
