@@ -1,0 +1,169 @@
+name: Daily Playwright Cucumber Tests
+
+on:
+  # 10:00 AM IST = 04:30 UTC  (IST is UTC+5:30, so subtract 5h30m from 10:00)
+  schedule:
+    - cron: "30 4 * * *"
+  # Manual trigger — optionally scope to a tag or scenario name to avoid a full suite run.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Cucumber tag to run (e.g. @smoke, @23455). Leave blank for the full suite."
+        required: false
+        default: ""
+      scenario_name:
+        description: "Scenario name substring to run. Ignored if 'tag' is also provided."
+        required: false
+        default: ""
+
+# Prevent two concurrent runs from opening duplicate fix-PRs for the same branch name.
+# cancel-in-progress: false — never kill a cron run mid-fix just because a manual dispatch arrived.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+# NOTE: contents/pull-requests write is required by the Claude fix step to push branches and open PRs.
+# Ideally this would be scoped to a separate job (test: read, fix: write), but that requires a two-job
+# split with job outputs. The current single-job approach accepts this over-grant as a tradeoff.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Guard against a hung Playwright browser or stalled navigation — GitHub's default is 6 hours.
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Installs Chromium + all OS-level deps (fonts, libs) required to run headless on ubuntu-latest.
+      - name: Install Playwright browsers with system deps
+        run: npx playwright install --with-deps chromium
+
+      # id is required so the fix step can check this step's outcome.
+      # continue-on-error keeps the job alive on test failure so subsequent steps (including Claude) run.
+      # GitHub Actions sets CI=true automatically — hooks.ts reads this to launch Chromium headless.
+      - name: Run Cucumber tests
+        id: run-tests
+        continue-on-error: true
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            npm run tag -- "${{ inputs.tag }}"
+          elif [ -n "${{ inputs.scenario_name }}" ]; then
+            npm run name -- "${{ inputs.scenario_name }}"
+          else
+            npm test
+          fi
+
+      # No continue-on-error here — a failure (e.g. empty allure-results/) should surface visibly,
+      # not be silently swallowed. The Claude fix step can still run via always() below.
+      - name: Generate Allure report
+        if: always()
+        run: npx allure generate allure-results --clean -o allure-report
+
+      # Uploads: HTML report, raw Allure results (contains trace ZIPs in allure-results/traces/),
+      # and the generated Allure report. Raw results are retained so Claude can read trace ZIPs directly.
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-${{ github.run_number }}
+          path: |
+            reports/cucumber-report.html
+            allure-results/
+            allure-report/
+          retention-days: 7
+
+      # always() is required: without it, a non-zero exit from any earlier step (e.g. upload-artifact
+      # on a network error) would suppress this step even when tests genuinely failed.
+      - name: Fix failing tests with Claude
+        if: always() && steps.run-tests.outcome == 'failure'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            The daily Cucumber + Playwright test run has failed. Your job is to diagnose
+            and fix test-side issues — not to mask product bugs.
+
+            This project uses Playwright launched via the Cucumber hooks (hooks/hooks.ts),
+            NOT the Playwright test runner. The test command is `npm test` (cucumber-js).
+            Always follow all conventions in CLAUDE.md, .claude/rules/, and use the skills
+            (cucumber-patterns, api-test, create-pr) when relevant to the fix.
+
+            ── STEP 1: DIAGNOSE ──────────────────────────────────────────────────────────
+            1. Read the failing scenario names from the `npm test` output in this run's logs.
+            2. For each failing scenario, locate its Playwright trace ZIP in:
+                 allure-results/traces/<scenario-name>_<timestamp>.zip
+               Read the ZIP contents directly (do NOT run `npx playwright show-trace` —
+               that opens a GUI browser and will hang on a headless CI runner).
+               The trace format is a ZIP of NDJSON files; read the events to find the
+               last successful action before the failure.
+            3. Also read reports/cucumber-report.html for the full failure message and stack.
+            4. Classify EACH failure as exactly one of:
+                 A) Flaky wait       — timing/selector race condition
+                 B) Locator drift    — UI changed, selector no longer matches
+                 C) Test logic bug   — wrong assertion, step order, or data
+                 D) Product bug      — the application itself is broken (not a test issue)
+
+            ── STEP 2: FIX (classes A, B, C only) ───────────────────────────────────────
+            - Apply minimal, targeted fixes only in pages/ or features/stepDef/.
+            - NEVER edit .feature files to comment out, skip, or weaken assertions —
+              that hides failures rather than fixing them.
+            - Follow locator guidelines in .claude/rules/page-objects.md:
+                prefer getByRole / getByLabel / getByPlaceholder over raw CSS selectors.
+            - Follow step-definition conventions in .claude/rules/step-definitions.md:
+                all async calls must be awaited; no floating promises; no ts-nocheck.
+            - Do NOT add unconditional waits or retry loops as workarounds.
+            - Do NOT add new features, refactor unrelated code, or change test data.
+
+            ── STEP 3: VERIFY ────────────────────────────────────────────────────────────
+            - Re-run ONLY the affected scenarios using their @tag:
+                npm run tag -- @<ticketId>
+              or by name:
+                npm run name -- "<exact scenario name>"
+            - Every re-run scenario must pass (exit 0) before you open a PR.
+            - If any scenario still fails after your fix, do NOT open a PR — describe
+              the blocker in your response instead.
+
+            ── STEP 4: OPEN A PR (on verified success) ───────────────────────────────────
+            - Use /create-pr or follow .claude/rules/git-workflow.md exactly.
+            - Branch name format: fix/daily-<YYYY-MM-DD>-<short-description>
+            - Commit message format (Conventional Commits):
+                fix: <description>
+
+                Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+            - PR title: "fix: automated daily test fix <YYYY-MM-DD>"
+            - PR body must contain a section for EACH fixed scenario:
+                • Scenario name and @tag
+                • Root-cause class (A / B / C) and explanation
+                • Files changed and what was changed
+                • Verification command run and its outcome (pass)
+            - If there are ALSO class D failures in the same run, include the
+              "Product Bugs Detected" section (see STEP 5) in the same PR body.
+
+            ── STEP 5: PRODUCT BUG REPORTING (class D) ──────────────────────────────────
+            - Do NOT patch class D failures or write workaround assertions.
+            - Do NOT attempt to open a PR if there are no code changes to commit —
+              follow .claude/rules/git-workflow.md: "If nothing to commit after staging,
+              report it and stop."
+            - Instead, write the bug report to the GitHub Actions step summary:
+                echo "## 🐛 Product Bugs Detected" >> $GITHUB_STEP_SUMMARY
+              Add one entry per class D failure:
+                • Scenario name and @tag
+                • Expected vs actual behaviour
+                • Relevant error message or trace excerpt
+            - If class D failures exist alongside class A/B/C fixes, include the bug
+              report in the PR body under a "🐛 Product Bugs Detected" section instead.
