@@ -15,6 +15,9 @@
       "Bash(xargs ls)",
       "Bash(pkill -f \"mcp-chrome\")",
       "Bash(gh pr *)",
+      "Skill(create-pr)",
+      "Skill(cucumber-patterns)",
+      "Skill(api-test)",
       "Read(//tmp/**)",
       "Read(//opt/homebrew/bin/**)",
       "Read(//Users/arunramalingam/Applications/**)",
@@ -30,9 +33,7 @@
       "mcp__playwright__browser_console_messages"
     ]
   },
-  "enabledMcpjsonServers": [
-    "playwright"
-  ],
+  "enabledMcpjsonServers": ["playwright"],
   "hooks": {
     "PostToolUse": [
       {
