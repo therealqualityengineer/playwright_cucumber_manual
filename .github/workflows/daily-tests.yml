@@ -73,6 +73,29 @@ jobs:
         if: always()
         run: npx allure generate allure-results --clean -o allure-report
 
+      # Deploys the static Allure HTML report to the gh-pages branch so it's accessible
+      # via a stable browser link without requiring GitHub login.
+      # One-time setup required: Settings → Pages → Branch: gh-pages / (root)
+      - name: Deploy Allure report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+          keep_files: false
+          force_orphan: false
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com
+
+      - name: Set report URL env var
+        if: always()
+        run: |
+          OWNER=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f1)
+          REPO=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f2)
+          echo "ALLURE_REPORT_URL=https://${OWNER}.github.io/${REPO}/" >> $GITHUB_ENV
+          echo "### Allure Report" >> $GITHUB_STEP_SUMMARY
+          echo "[View report](https://${OWNER}.github.io/${REPO}/)" >> $GITHUB_STEP_SUMMARY
+
       # Uploads: HTML report, raw Allure results (contains trace ZIPs in allure-results/traces/),
       # and the generated Allure report. Raw results are retained so Claude can read trace ZIPs directly.
       - name: Upload test artifacts
@@ -215,6 +238,7 @@ jobs:
           repo = os.environ.get("GITHUB_REPOSITORY", "")
           run_id = os.environ.get("GITHUB_RUN_ID", "")
           run_url = f"https://github.com/{repo}/actions/runs/{run_id}"
+          report_url = os.environ.get("ALLURE_REPORT_URL", "")
           now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
           failing_section = ""
@@ -234,6 +258,7 @@ jobs:
             f'<h2 style="margin:0">{status_text}</h2></div>'
             f'<p><strong>Date:</strong> {now}</p>'
             f'<p><strong>Workflow run:</strong> <a href="{run_url}">{run_url}</a></p>'
+            f'<p><strong>Allure report:</strong> <a href="{report_url}">{report_url}</a></p>'
             f'<h3 style="margin-top:20px">Results</h3>'
             f'<table style="border-collapse:collapse">'
             f'<tr><td style="padding:4px 24px 4px 0"><strong>Total scenarios</strong></td><td>{total}</td></tr>'
