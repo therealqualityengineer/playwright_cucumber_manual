@@ -82,6 +82,7 @@ jobs:
           name: test-artifacts-${{ github.run_number }}
           path: |
             reports/cucumber-report.html
+            reports/cucumber-report.json
             allure-results/
             allure-report/
           retention-days: 7
@@ -167,3 +168,94 @@ jobs:
                 • Relevant error message or trace excerpt
             - If class D failures exist alongside class A/B/C fixes, include the bug
               report in the PR body under a "🐛 Product Bugs Detected" section instead.
+
+            ── STEP 6: WRITE SUMMARY FILE ───────────────────────────────────────────────
+            After all steps above, write a brief summary to
+            $GITHUB_WORKSPACE/claude-fix-summary.md:
+              - One bullet per fixed scenario: name, root-cause class (A/B/C), fix applied.
+              - One bullet per class D (product bug): scenario name and brief description.
+              - If nothing was fixed, write: "No fixable test failures found."
+            This file is read by the email notification step.
+
+      - name: Build email body
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.run-tests.outcome }}
+        run: |
+          cat > /tmp/build_email.py << 'PYEOF'
+          import json, os, pathlib, html as h
+          from datetime import datetime, timezone, date as dt
+
+          report = pathlib.Path("reports/cucumber-report.json")
+          if report.exists():
+            data = json.loads(report.read_text())
+            scenarios = [el for feat in data for el in feat.get("elements", [])]
+            failed = [s for s in scenarios if any(
+              step.get("result", {}).get("status") == "failed"
+              for step in s.get("steps", [])
+            )]
+            total = len(scenarios)
+            failed_count = len(failed)
+            passed_count = total - failed_count
+            failed_names = [s.get("name", "") for s in failed]
+          else:
+            total = passed_count = failed_count = "?"
+            failed_names = []
+
+          is_pass = os.environ.get("TEST_OUTCOME", "") == "success"
+          status_text = "ALL TESTS PASSED" if is_pass else "TESTS FAILED"
+          status_color = "#28a745" if is_pass else "#dc3545"
+
+          repo = os.environ.get("GITHUB_REPOSITORY", "")
+          run_id = os.environ.get("GITHUB_RUN_ID", "")
+          run_url = f"https://github.com/{repo}/actions/runs/{run_id}"
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+          failing_section = ""
+          if failed_names:
+            items = "".join(f"<li>{h.escape(n)}</li>" for n in failed_names)
+            failing_section = f'<h3 style="color:#dc3545;margin-top:20px">Failing Scenarios</h3><ul style="line-height:1.8">{items}</ul>'
+
+          claude_section = ""
+          claude_path = pathlib.Path("claude-fix-summary.md")
+          if claude_path.exists():
+            content = h.escape(claude_path.read_text())
+            claude_section = f'<h3 style="color:#0366d6;margin-top:20px">Claude Fix Summary</h3><pre style="background:#f6f8fa;padding:12px;border-radius:4px;font-size:13px;white-space:pre-wrap">{content}</pre>'
+
+          body = (
+            f'<html><body style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:20px">'
+            f'<div style="background:{status_color};color:#fff;padding:16px 20px;border-radius:6px;margin-bottom:20px">'
+            f'<h2 style="margin:0">{status_text}</h2></div>'
+            f'<p><strong>Date:</strong> {now}</p>'
+            f'<p><strong>Workflow run:</strong> <a href="{run_url}">{run_url}</a></p>'
+            f'<h3 style="margin-top:20px">Results</h3>'
+            f'<table style="border-collapse:collapse">'
+            f'<tr><td style="padding:4px 24px 4px 0"><strong>Total scenarios</strong></td><td>{total}</td></tr>'
+            f'<tr><td style="padding:4px 24px 4px 0"><strong>Passed</strong></td><td style="color:#28a745"><strong>{passed_count}</strong></td></tr>'
+            f'<tr><td style="padding:4px 24px 4px 0"><strong>Failed</strong></td><td style="color:#dc3545"><strong>{failed_count}</strong></td></tr>'
+            f'</table>{failing_section}{claude_section}'
+            f'</body></html>'
+          )
+
+          pathlib.Path("email-body.html").write_text(body)
+          today = dt.today().isoformat()
+          label = "PASSED" if is_pass else "FAILED"
+          with open(os.environ["GITHUB_ENV"], "a") as f:
+            f.write(f"EMAIL_SUBJECT=[Daily Tests] {label} - {today}\n")
+          print("Email body written.")
+          PYEOF
+          python3 /tmp/build_email.py
+
+      - name: Send test summary email
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: ${{ env.EMAIL_SUBJECT }}
+          to: therealqualityengineer@gmail.com
+          from: "GitHub Actions <${{ secrets.EMAIL_USERNAME }}>"
+          html_body: file://email-body.html
