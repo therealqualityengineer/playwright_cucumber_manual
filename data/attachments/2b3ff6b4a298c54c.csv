@@ -1,0 +1,7 @@
+Field,Value
+Client,<this.clientName>
+Temp,<this.tempFirstName>
+Job Date,<Today+2>
+shiftnum,108
+Order Cert,RN
+Specialty,ER
