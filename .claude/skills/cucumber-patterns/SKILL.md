@@ -1,6 +1,6 @@
 ---
 name: cucumber-patterns
-description: 'Author Cucumber feature files and step definitions for Playwright+Cucumber framework. Use when: creating or editing .feature or .steps.ts files; implementing new test scenarios; integrating new UI pages or API actions. Ensures step reuse, proper type safety, dynamic date handling, and POM compliance.'
+description: "Author Cucumber feature files and step definitions for Playwright+Cucumber framework. Use when: creating or editing .feature or .steps.ts files; implementing new test scenarios; integrating new UI pages or API actions. Ensures step reuse, proper type safety, dynamic date handling, and POM compliance."
 argument-hint: 'Describe the feature to author (e.g., "Login workflow", "API client creation")'
 ---
 
@@ -44,31 +44,7 @@ If an exact or semantically matching step exists, **reuse it**. See [references/
 
 #### Search Popup Selection (`BasePage.selectFromSearchPopup`)
 
-**Never re-implement the search popup flow inline.** All page methods that open a search popup and select an entity must delegate to:
-
-```typescript
-// In BasePage.ts
-async selectFromSearchPopup(triggerLocator: Locator, searchText: string): Promise<void>
-```
-
-This covers the full 6-step flow: open popup → fill search → click Search → pick result → close → wait hidden.
-
-**Pattern — page class side:**
-```typescript
-private readonly tempFilterButton = this.page.locator('#tfobj_textItem0');
-private readonly clientFilterButton = this.page.locator('#cfobj_textItem0');
-
-async generateReport(filters: ReportFilters): Promise<string> {
-    if (filters.tempName) {
-        await this.selectFromSearchPopup(this.tempFilterButton, filters.tempName);
-    }
-    if (filters.clientName) {
-        await this.selectFromSearchPopup(this.clientFilterButton, filters.clientName);
-    }
-}
-```
-
-Trigger locators are CSS-ID buttons (`#tfobj_textItem0`, `#cfobj_textItem0`) or `getByText` locators specific to that page.
+Any page method that selects an entity via a search popup **must** delegate to `BasePage.selectFromSearchPopup` — never inline the popup flow. See [references/POM_IMPLEMENTATION.md](./references/POM_IMPLEMENTATION.md#search-popup-selection) for the full pattern and code examples.
 
 ---
 
@@ -86,6 +62,7 @@ If implementing a **new domain entity** (e.g., `InvoiceManager`):
    - Import the class
 
 3. Instantiate in `hooks.ts` `Before`:
+
    ```typescript
    this.invoiceManagerPage = new InvoiceManagerPage(this.page);
    ```
@@ -117,6 +94,7 @@ Feature: Invoice Manager - CRUD operations
 ```
 
 **Rules:**
+
 - Tags on the `Scenario:` line: at least `@regression` or `@smoke` plus an optional `@<ticketId>`.
 - Steps after Background use `And` (not `Given`/`When`) — match the existing style in the project.
 - Dynamic tokens: `<RandomAlphabets>`, `<RandomEmail>`, `<RandomNumbers>`, `<Today+N>`, `<this.fieldName>` — resolved in step code.
@@ -127,41 +105,33 @@ Feature: Invoice Manager - CRUD operations
 **File location**: `features/stepDef/<domain>.steps.ts`
 
 ```typescript
-import { Given, When, Then } from '@cucumber/cucumber';
-import { CustomWorld } from '../../utils/CustomWorld';
-import { InvoiceManagerDetails } from '../../pages/InvoiceManagerPage';
-import {
-  RandomAlphabets, RandomEmail, RandomNumbers, RandomString, ResolveDate
-} from '../../test-data/ResolveDynamicData';
+import { Given, When, Then } from "@cucumber/cucumber";
+import { CustomWorld } from "../../utils/CustomWorld";
+import { resolvePlaceholder } from "../../utils/resolvePlaceholder";
+import { InvoiceManagerDetails } from "../../pages/InvoiceManagerPage";
 
-Given('the user create invoice with the following details', async function (this: CustomWorld, dataTable: DataTable) {
-  const details: Partial<InvoiceManagerDetails> = {};
+Given(
+  "the user create invoice with the following details",
+  async function (this: CustomWorld, dataTable: DataTable) {
+    const details: Partial<InvoiceManagerDetails> = {};
 
-  for (const row of dataTable.raw().slice(1)) {
-    const field = (row[0] ?? '') as keyof InvoiceManagerDetails;
-    let value = row[1] ?? '';
-
-    if (value === '<RandomEmail>') value = RandomEmail();
-    else if (value === '<RandomAlphabets>') value = RandomAlphabets();
-    else if (value === '<RandomNumbers>') value = RandomNumbers();
-    else if (value === '<RandomString>') value = RandomString();
-    else if (value.includes('<Today')) value = ResolveDate(value);
-    else if (value.startsWith('<this.')) {
-      const fieldName = value.slice(6, -1);
-      value = String((this as unknown as Record<string, unknown>)[fieldName] ?? '');
+    for (const row of dataTable.raw().slice(1)) {
+      const field = (row[0] ?? "") as keyof InvoiceManagerDetails;
+      details[field] = resolvePlaceholder(row[1] ?? "", this);
     }
 
-    details[field] = value;
-  }
-
-  await this.invoiceManagerPage.createInvoice(details as InvoiceManagerDetails);
-  this.invoiceId = await this.invoiceManagerPage.waitForInvoiceId();
-});
+    await this.invoiceManagerPage.createInvoice(
+      details as InvoiceManagerDetails,
+    );
+    this.invoiceId = await this.invoiceManagerPage.waitForInvoiceId();
+  },
+);
 ```
 
 **Key rules:**
+
 - `dataTable.raw().slice(1)` — skip header row.
-- Resolve tokens inline with `if/else` chains; `<this.*>` via the generic `startsWith('<this.')` guard.
+- Resolve all tokens with `resolvePlaceholder(row[1] ?? '', this)` — handles `<Random*>`, `<Today[±N]>`, and `<this.*>`. Never re-implement inline chains.
 - All `async` calls must be awaited — `@typescript-eslint/no-floating-promises` is enforced.
 - No `@ts-nocheck`.
 
@@ -172,15 +142,17 @@ For the full token reference table, see [test-generation skill](../test-generati
 ```typescript
 // In pages/InvoiceManagerPage.ts
 export interface InvoiceManagerDetails {
-  invoiceNumber: string;   // Required
-  clientName: string;      // Required
-  amount?: number;         // Optional — has default
-  dueDate?: string;        // Optional — has default
+  invoiceNumber: string; // Required
+  clientName: string; // Required
+  amount?: number; // Optional — has default
+  dueDate?: string; // Optional — has default
 }
 
-const DEFAULT_INVOICE_MANAGER_DETAILS: Required<Omit<InvoiceManagerDetails, 'invoiceNumber' | 'clientName'>> = {
+const DEFAULT_INVOICE_MANAGER_DETAILS: Required<
+  Omit<InvoiceManagerDetails, "invoiceNumber" | "clientName">
+> = {
   amount: 0,
-  dueDate: '',
+  dueDate: "",
 };
 ```
 

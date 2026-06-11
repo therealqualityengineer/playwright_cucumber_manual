@@ -1,6 +1,6 @@
 ---
 name: api-test
-description: 'Verify test outcomes via API instead of UI. Use when: writing Then/And assertion steps; querying state after actions; avoiding slow UI element waits; combining API verification with UI flows. Replaces UI assertions with Playwright APIRequestContext calls to the ClearConnect backend.'
+description: "Verify test outcomes via API instead of UI. Use when: writing Then/And assertion steps; querying state after actions; avoiding slow UI element waits; combining API verification with UI flows. Replaces UI assertions with Playwright APIRequestContext calls to the ClearConnect backend."
 ---
 
 # API-Based Test Assertions
@@ -19,11 +19,11 @@ Verify test outcomes using direct API calls instead of UI inspection. This appro
 
 ### Example Scenarios
 
-| UI Assertion | API Assertion |
-|---|---|
-| Wait for "Invoice created" toast → read invoice number from page | Call `/api/getInvoices` → assert `invoiceId` in response |
+| UI Assertion                                                        | API Assertion                                                                     |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Wait for "Invoice created" toast → read invoice number from page    | Call `/api/getInvoices` → assert `invoiceId` in response                          |
 | Fill form, submit, wait for redirect, read details from form fields | Call `/api/createInvoice`, then `/api/getInvoiceDetails` → assert response fields |
-| Navigate to report page, wait for table to load, count rows | Call `/api/getReports` → assert `rows.length` |
+| Navigate to report page, wait for table to load, count rows         | Call `/api/getReports` → assert `rows.length`                                     |
 
 ## Architecture Overview
 
@@ -51,15 +51,16 @@ In [APItest.steps.ts](../../features/stepDef/APItest.steps.ts), add to `API_METH
 
 ```typescript
 const API_METHOD_MAP: Record<string, HttpMethod> = {
-    getTemps:        'GET',
-    getClients:      'GET',
-    getInvoices:     'GET',      // ← NEW: register your API method
-    createInvoice:   'POST',
-    deleteInvoice:   'POST',
+  getTemps: "GET",
+  getClients: "GET",
+  getInvoices: "GET", // ← NEW: register your API method
+  createInvoice: "POST",
+  deleteInvoice: "POST",
 };
 ```
 
 **Rules**:
+
 - Key must match the API action name (e.g., `getInvoices`)
 - Value is the HTTP method (`GET`, `POST`, `PUT`, `DELETE`)
 - When you call `Given the user perform 'getInvoices' API call`, the framework auto-injects `action=getInvoices` as a query param
@@ -77,7 +78,8 @@ Given the user perform 'getInvoices' API call with the following details
   | includeArchived | false          |
 ```
 
-**Resolves to**: 
+**Resolves to**:
+
 ```
 GET /wfportal/clearConnect/2_0/?action=getInvoices&clientId=<ID>&status=Active&includeArchived=false
 Authorization: Basic <base64(username:password)>
@@ -93,6 +95,7 @@ const response = this.apiResponse; // { rows: [{ invoiceId: '123', amount: 5000 
 ```
 
 Response formats vary:
+
 - **Array**: `[{ id: '1', name: 'Item A' }, ...]` → use `response[0]`
 - **Paginated**: `{ rows: [{ id: '1', ... }] }` → use `response.rows[0]`
 - **Wrapped**: `{ data: { id: '1', ... } }` → unwrap accordingly
@@ -112,11 +115,13 @@ Then the API response should contain the following details
 ```
 
 The step:
+
 1. Extracts the first record from the response (array, paginated, or plain object)
 2. Resolves `<this.*>` tokens from `CustomWorld` state
 3. Asserts each field with `expect(actual).toBe(expected)`
 
 Failures are clear:
+
 ```
 Error: Assertion failed: expected 'Draft' to be 'Active'
 ```
@@ -158,6 +163,7 @@ Then the API response should contain the following details
 ```
 
 Each row is asserted independently:
+
 ```typescript
 expect(response.invoiceId).toBe(this.invoiceId);
 expect(response.invoiceNumber).toBe(this.invoiceNumber);
@@ -175,11 +181,12 @@ Given the user perform 'getInvoiceDetails' API call with the following details
 ```
 
 The step definition resolves `<this.invoiceId>` → actual ID from `CustomWorld`, then calls:
+
 ```
 GET /wfportal/clearConnect/2_0/?action=getInvoiceDetails&invoiceId=INV-12345
 ```
 
-See [APItest.steps.ts](../../features/stepDef/APItest.steps.ts) lines 20–33 for token resolution logic.
+Token resolution uses `resolvePlaceholder()` from `utils/resolvePlaceholder.ts` — see [APItest.steps.ts](../../features/stepDef/APItest.steps.ts) for usage.
 
 ## Example: Invoice API Assertions
 
@@ -212,42 +219,49 @@ Scenario: Create invoice via UI and verify with API
 The generic steps in [APItest.steps.ts](../../features/stepDef/APItest.steps.ts) handle this:
 
 ```typescript
-Given('the user perform {string} API call with the following details', async function (apiName, dataTable) {
-  const method = API_METHOD_MAP[apiName];
-  if (!method) throw new Error(`Unknown API: ${apiName}`);
-  
-  const params = { action: apiName };
-  // Resolve <this.*> tokens and build params...
-  
-  this.apiResponse = await this.apiTestPage.callApi(method, params);
-});
+Given(
+  "the user perform {string} API call with the following details",
+  async function (apiName, dataTable) {
+    const method = API_METHOD_MAP[apiName];
+    if (!method) throw new Error(`Unknown API: ${apiName}`);
 
-Then('the API response should contain the following details', async function (dataTable) {
-  const response = this.apiResponse;
+    const params = { action: apiName };
+    // Resolve <this.*> tokens and build params...
 
-  // Extract first record from array, paginated rows, or plain object
-  let record: Record<string, unknown>;
-  if (Array.isArray(response)) {
-    record = (response[0] as Record<string, unknown>) ?? {};
-  } else {
-    const obj = response as Record<string, unknown>;
-    const rows = obj['rows'];
-    record = (Array.isArray(rows) ? rows[0] : undefined) ?? obj;
-  }
+    this.apiResponse = await this.apiTestPage.callApi(method, params);
+  },
+);
 
-  // Assert each field — skip header row via .raw().slice(1)
-  for (const row of dataTable.raw().slice(1)) {
-    const key = row[0] ?? '';
-    const expected = row[1] ?? '';
-    const actual = String(record[key] ?? '');
-    expect(actual).toBe(expected);
-  }
-});
+Then(
+  "the API response should contain the following details",
+  async function (dataTable) {
+    const response = this.apiResponse;
+
+    // Extract first record from array, paginated rows, or plain object
+    let record: Record<string, unknown>;
+    if (Array.isArray(response)) {
+      record = (response[0] as Record<string, unknown>) ?? {};
+    } else {
+      const obj = response as Record<string, unknown>;
+      const rows = obj["rows"];
+      record = (Array.isArray(rows) ? rows[0] : undefined) ?? obj;
+    }
+
+    // Assert each field — skip header row via .raw().slice(1)
+    for (const row of dataTable.raw().slice(1)) {
+      const key = row[0] ?? "";
+      const expected = row[1] ?? "";
+      const actual = String(record[key] ?? "");
+      expect(actual).toBe(expected);
+    }
+  },
+);
 ```
 
 ### To Use
 
 1. **Add your API to the registry**:
+
    ```typescript
    API_METHOD_MAP: {
      getInvoiceDetails: 'GET',
@@ -263,19 +277,22 @@ Then('the API response should contain the following details', async function (da
 If the generic steps don't fit, write custom assertions:
 
 ```typescript
-Then('the invoice should have a future due date', async function (this: CustomWorld) {
-  if (!this.apiResponse || typeof this.apiResponse !== 'object') {
-    throw new Error('No API response');
-  }
-  
-  const response = Array.isArray(this.apiResponse) 
-    ? this.apiResponse[0] 
-    : this.apiResponse;
-  
-  const dueDate = new Date(response.dueDate as string);
-  const today = new Date();
-  expect(dueDate.getTime()).toBeGreaterThan(today.getTime());
-});
+Then(
+  "the invoice should have a future due date",
+  async function (this: CustomWorld) {
+    if (!this.apiResponse || typeof this.apiResponse !== "object") {
+      throw new Error("No API response");
+    }
+
+    const response = Array.isArray(this.apiResponse)
+      ? this.apiResponse[0]
+      : this.apiResponse;
+
+    const dueDate = new Date(response.dueDate as string);
+    const today = new Date();
+    expect(dueDate.getTime()).toBeGreaterThan(today.getTime());
+  },
+);
 ```
 
 Store the response in `CustomWorld.apiResponse` so it persists across steps:

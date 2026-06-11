@@ -1,9 +1,6 @@
 import { Given, When, Then, DataTable } from "@cucumber/cucumber";
 import { CustomWorld } from "../../utils/CustomWorld";
-import {
-  RandomAlphabets,
-  RandomNumbers,
-} from "../../test-data/ResolveDynamicData";
+import { resolvePlaceholder } from "../../utils/resolvePlaceholder";
 import { ClientDetails } from "../../pages/ClientManagerPage";
 
 Given(
@@ -13,14 +10,10 @@ Given(
 
     for (const row of dataTable.raw().slice(1)) {
       const field = row[0] ?? "";
-      const value = row[1] ?? "";
-      if (value === "<RandomAlphabets>") {
-        details[field as keyof ClientDetails] = RandomAlphabets();
-      } else if (value === "<RandomNumbers>") {
-        details[field as keyof ClientDetails] = RandomNumbers();
-      } else {
-        details[field as keyof ClientDetails] = value;
-      }
+      details[field as keyof ClientDetails] = resolvePlaceholder(
+        row[1] ?? "",
+        this,
+      );
     }
 
     const clientName = details["ClientName"];

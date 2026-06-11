@@ -29,29 +29,29 @@ Always use `.raw().slice(1)` to skip the header row:
 
 ```typescript
 for (const row of dataTable.raw().slice(1)) {
-  const field = row[0] ?? '';
-  let value = row[1] ?? '';
+  const field = row[0] ?? "";
+  let value = row[1] ?? "";
   // resolve tokens, then assign
 }
 ```
 
 ## Token Resolution
 
-Resolve dynamic tokens inline with `if/else` chains — no shared helper. Resolve **before** passing to the page method:
+Use `resolvePlaceholder(value, this)` from `utils/resolvePlaceholder.ts`. Resolve **before** passing to the page method:
 
 ```typescript
-if (value === '<RandomEmail>')        value = RandomEmail();
-else if (value === '<RandomAlphabets>') value = RandomAlphabets();
-else if (value === '<RandomNumbers>')   value = RandomNumbers();
-else if (value === '<RandomString>')    value = RandomString();
-else if (value.includes('<Today'))      value = ResolveDate(value);
-else if (value.startsWith('<this.')) {
-  const fieldName = value.slice(6, -1);
-  value = String((this as unknown as Record<string, unknown>)[fieldName] ?? '');
+import { resolvePlaceholder } from "../../utils/resolvePlaceholder";
+
+// In a DataTable loop:
+for (const row of dataTable.raw().slice(1)) {
+  details[row[0] ?? ""] = resolvePlaceholder(row[1] ?? "", this);
 }
+
+// For a single value:
+const resolved = resolvePlaceholder(rawValue, this);
 ```
 
-All resolvers are in `test-data/ResolveDynamicData.ts`.
+Handles: `<RandomEmail>`, `<RandomAlphabets>`, `<RandomNumbers>`, `<RandomString>`, `<Today[±N]>`, and all `<this.*>` world-state tokens. Do **not** reimplement inline chains — add new token types to `utils/resolvePlaceholder.ts` instead.
 
 ## Type Safety
 
@@ -69,12 +69,10 @@ All resolvers are in `test-data/ResolveDynamicData.ts`.
 Standard import block for a new step file:
 
 ```typescript
-import { Given, When, Then, DataTable } from '@cucumber/cucumber';
-import { CustomWorld } from '../../utils/CustomWorld';
-import { MyEntityDetails } from '../../pages/MyEntityPage';
-import {
-  RandomAlphabets, RandomEmail, RandomNumbers, RandomString, ResolveDate
-} from '../../test-data/ResolveDynamicData';
+import { Given, When, Then, DataTable } from "@cucumber/cucumber";
+import { CustomWorld } from "../../utils/CustomWorld";
+import { resolvePlaceholder } from "../../utils/resolvePlaceholder";
+import { MyEntityDetails } from "../../pages/MyEntityPage";
 ```
 
 ## CustomWorld State

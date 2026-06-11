@@ -39,17 +39,7 @@ Also read `utils/CustomWorld.ts` and any relevant `pages/*Page.ts` to understand
 
 ## Step 2: Reuse Existing Steps
 
-Canonical reusable steps (always prefer over writing new ones):
-
-| Step | Purpose |
-|------|---------|
-| `Given the user login to the application {string} with {string} credentials` | Login — always in Background |
-| `And the user create a new temp with the following details` | Create temp |
-| `Then the temp id should be generated successfully in the url` | Capture temp ID |
-| `And the user create a new client with the following details` | Create client |
-| `Then the client id should be generated successfully in the url` | Capture client ID |
-| `And the user create a new order with the following details` | Create order |
-| `Then the order id should be generated successfully` | Capture order ID |
+See the [test-generation skill](../skills/test-generation/SKILL.md#step-2--reuse-existing-steps-aggressively) for the full canonical step registry (core entity, temp-specific, report, and API steps).
 
 Only write a new step definition if no canonical or existing step matches.
 

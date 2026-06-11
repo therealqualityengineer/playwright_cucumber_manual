@@ -1,10 +1,6 @@
 import { Given, Then, When, DataTable } from "@cucumber/cucumber";
 import { CustomWorld } from "../../utils/CustomWorld";
-import {
-  RandomAlphabets,
-  RandomNumbers,
-  RandomEmail,
-} from "../../test-data/ResolveDynamicData";
+import { resolvePlaceholder } from "../../utils/resolvePlaceholder";
 import { TempDetails } from "../../pages/TempManagerPage";
 
 Given(
@@ -14,16 +10,10 @@ Given(
 
     for (const row of dataTable.raw().slice(1)) {
       const field = row[0] ?? "";
-      const value = row[1] ?? "";
-      if (value === "<RandomAlphabets>") {
-        details[field as keyof TempDetails] = RandomAlphabets();
-      } else if (value === "<RandomNumbers>") {
-        details[field as keyof TempDetails] = RandomNumbers();
-      } else if (value === "<RandomEmail>") {
-        details[field as keyof TempDetails] = RandomEmail();
-      } else {
-        details[field as keyof TempDetails] = value;
-      }
+      details[field as keyof TempDetails] = resolvePlaceholder(
+        row[1] ?? "",
+        this,
+      );
     }
 
     const tempFirstName = details["First Name"];
@@ -79,12 +69,7 @@ Given(
     }
     const filters: Record<string, string> = {};
     for (const row of dataTable.raw().slice(1)) {
-      const field = row[0] ?? "";
-      let value = row[1] ?? "";
-      if (value === "<this.clientName>") {
-        value = this.clientName ?? "";
-      }
-      filters[field] = value;
+      filters[row[0] ?? ""] = resolvePlaceholder(row[1] ?? "", this);
     }
     await this.tempManagerPage.applyFacilitiesFilters(filters);
   },

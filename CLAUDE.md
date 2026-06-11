@@ -22,6 +22,7 @@ npm run allure:report         # Generate + open Allure report
 ```
 
 To view a Playwright trace from a failed scenario:
+
 ```bash
 npx playwright show-trace allure-results/traces/<trace>.zip
 ```
@@ -44,25 +45,26 @@ test-data/
   users.json      # Credentials keyed by username; 'default' key = default creds
   ResolveDynamicData.ts  # Random value generators + date resolver
 utils/
-  CustomWorld.ts  # Cucumber World — shared state across steps
+  CustomWorld.ts          # Cucumber World — shared state across steps
+  resolvePlaceholder.ts   # Token resolver — <Random*>, <Today±N>, <this.*>
 ```
 
 ## Tags
 
-| Tag | Purpose |
-|-----|---------|
-| `@smoke` | Critical path, fast subset |
-| `@regression` | Full regression suite |
-| `@api` | API-level tests via ClearConnect |
+| Tag           | Purpose                                |
+| ------------- | -------------------------------------- |
+| `@smoke`      | Critical path, fast subset             |
+| `@regression` | Full regression suite                  |
+| `@api`        | API-level tests via ClearConnect       |
 | `@<ticketId>` | Ticket-level targeting (e.g. `@23455`) |
 
 ## Environments
 
-| Key | Login URL |
-|-----|-----------|
-| `Env_QA` | `ctmsqa.contingenttalentmanagement.com` |
-| `Env_Dev` | `ctmsdev.contingenttalentmanagement.com` |
-| `Env_HF` | `ctmsqahf.contingenttalentmanagement.com` |
+| Key       | Login URL                                 |
+| --------- | ----------------------------------------- |
+| `Env_QA`  | `ctmsqa.contingenttalentmanagement.com`   |
+| `Env_Dev` | `ctmsdev.contingenttalentmanagement.com`  |
+| `Env_HF`  | `ctmsqahf.contingenttalentmanagement.com` |
 
 Login step format: `Given the user login to the application 'Env_QA' with 'testuser_01' credentials`
 
@@ -87,9 +89,9 @@ Login step format: `Given the user login to the application 'Env_QA' with 'testu
 
 Invoke these skills for detailed patterns and procedures:
 
-| Skill | When to use |
-|-------|-------------|
-| `/test-generation` | Generate a new feature file + step definitions from a spec |
-| `/cucumber-patterns` | Author or edit `.feature` / `.steps.ts` files |
-| `/api-test` | Write API assertion steps against the ClearConnect backend |
-| `/create-pr` | Commit, push, and open a GitHub PR |
+| Skill                | When to use                                                |
+| -------------------- | ---------------------------------------------------------- |
+| `/test-generation`   | Generate a new feature file + step definitions from a spec |
+| `/cucumber-patterns` | Author or edit `.feature` / `.steps.ts` files              |
+| `/api-test`          | Write API assertion steps against the ClearConnect backend |
+| `/create-pr`         | Commit, push, and open a GitHub PR                         |
