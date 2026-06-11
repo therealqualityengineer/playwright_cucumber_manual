@@ -40,19 +40,35 @@ Then(
   },
 );
 
+Then(
+  "the user verifies the client {string} message",
+  async function (this: CustomWorld, message: string) {
+    this.clientManagerPage.verifyTimeEntrySaveMessage(message);
+  },
+);
+
 When(
   "the user set following values in {string} page",
   async function (this: CustomWorld, pageName: string, dataTable: DataTable) {
     if (pageName === "Settings") {
       await this.clientManagerPage.openSettingsTab(this.clientId ?? "");
+    } else if (pageName === "Time Entry and Approval") {
+      await this.clientManagerPage.openTimeEntryTab(this.clientId ?? "");
     }
     for (const row of dataTable.raw().slice(1)) {
       const field = row[0] ?? "";
       const value = row[1] ?? "";
-      await this.clientManagerPage.setSettingsField(field, value);
+      if (!field) continue;
+      if (pageName === "Settings") {
+        await this.clientManagerPage.setSettingsField(field, value);
+      } else if (pageName === "Time Entry and Approval") {
+        await this.clientManagerPage.setTimeEntryField(field, value);
+      }
     }
     if (pageName === "Settings") {
       await this.clientManagerPage.saveSettings();
+    } else if (pageName === "Time Entry and Approval") {
+      await this.clientManagerPage.saveTimeEntrySettings();
     }
   },
 );
@@ -62,11 +78,18 @@ Then(
   async function (this: CustomWorld, pageName: string, dataTable: DataTable) {
     if (pageName === "Settings") {
       await this.clientManagerPage.openSettingsTab(this.clientId ?? "");
+    } else if (pageName === "Time Entry and Approval") {
+      await this.clientManagerPage.openTimeEntryTab(this.clientId ?? "");
     }
     for (const row of dataTable.raw().slice(1)) {
       const field = row[0] ?? "";
       const value = row[1] ?? "";
-      await this.clientManagerPage.verifySettingsField(field, value);
+      if (!field) continue;
+      if (pageName === "Settings") {
+        await this.clientManagerPage.verifySettingsField(field, value);
+      } else if (pageName === "Time Entry and Approval") {
+        await this.clientManagerPage.verifyTimeEntryField(field, value);
+      }
     }
   },
 );
