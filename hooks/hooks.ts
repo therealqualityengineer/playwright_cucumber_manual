@@ -7,7 +7,13 @@ import {
   setDefaultTimeout,
 } from "@cucumber/cucumber";
 
-import { chromium, Browser } from "@playwright/test";
+import {
+  chromium,
+  firefox,
+  webkit,
+  Browser,
+  BrowserType,
+} from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -26,9 +32,21 @@ setDefaultTimeout(60 * 1000);
 
 let browser: Browser;
 
+function getBrowserType(): BrowserType {
+  switch (process.env.BROWSER?.toLowerCase()) {
+    case "firefox":
+      return firefox;
+    case "safari":
+    case "webkit":
+      return webkit;
+    default:
+      return chromium;
+  }
+}
+
 BeforeAll(async function () {
-  browser = await chromium.launch({
-    headless: process.env.CI === "true",
+  browser = await getBrowserType().launch({
+    headless: process.env.CI === "true" || process.env.HEADLESS === "true",
   });
 });
 
