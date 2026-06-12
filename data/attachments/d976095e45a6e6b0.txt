@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Download_and_verify_Temp_Profiles_report_1781254303036.zip
+View with: npx playwright show-trace allure-results/traces/Download_and_verify_Temp_Profiles_report_1781254303036.zip

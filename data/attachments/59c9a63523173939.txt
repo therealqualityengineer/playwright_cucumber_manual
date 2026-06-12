@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Create_a_new_client_1781254091153.zip
+View with: npx playwright show-trace allure-results/traces/Create_a_new_client_1781254091153.zip

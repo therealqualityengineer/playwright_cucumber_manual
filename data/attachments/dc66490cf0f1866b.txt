@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Client_Requires_Orientation_set_to_yes_with_Warn_1781254182035.zip
+View with: npx playwright show-trace allure-results/traces/Client_Requires_Orientation_set_to_yes_with_Warn_1781254182035.zip

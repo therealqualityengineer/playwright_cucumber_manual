@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Verify_Permanent_Driving_Distance_for_temp_facility_1781254575582.zip
+View with: npx playwright show-trace allure-results/traces/Verify_Permanent_Driving_Distance_for_temp_facility_1781254575582.zip

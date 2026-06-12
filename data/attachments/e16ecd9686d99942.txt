@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Successful_login_with_valid_credentials_1781254212292.zip
+View with: npx playwright show-trace allure-results/traces/Successful_login_with_valid_credentials_1781254212292.zip

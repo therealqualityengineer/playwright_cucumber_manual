@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Verify_client_oriented_with_temp_1781254545347.zip
+View with: npx playwright show-trace allure-results/traces/Verify_client_oriented_with_temp_1781254545347.zip

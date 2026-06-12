@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Enable_Flat_Pay_for_a_temp_1781254484862.zip
+View with: npx playwright show-trace allure-results/traces/Enable_Flat_Pay_for_a_temp_1781254484862.zip

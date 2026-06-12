@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Save_Client_Time_Entry_and_Approval_settings_with_given_values_1781254151792.zip
+View with: npx playwright show-trace allure-results/traces/Save_Client_Time_Entry_and_Approval_settings_with_given_values_1781254151792.zip

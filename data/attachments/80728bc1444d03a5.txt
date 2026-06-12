@@ -1,0 +1,2 @@
+Trace saved: allure-results/traces/Download_and_verify_Client_Profiles_report_1781254363621.zip
+View with: npx playwright show-trace allure-results/traces/Download_and_verify_Client_Profiles_report_1781254363621.zip
