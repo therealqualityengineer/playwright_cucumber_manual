@@ -1,2 +1,0 @@
-Trace saved: allure-results/traces/Create_a_new_order_1781254272789.zip
-View with: npx playwright show-trace allure-results/traces/Create_a_new_order_1781254272789.zip
